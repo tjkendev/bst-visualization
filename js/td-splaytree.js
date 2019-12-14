@@ -254,18 +254,26 @@ function translate_obj(result, tl) {
     duration: 1000,
     easing: 'linear',
   }).add({
-    targets: ['path.edge-l', 'path.edge-r'],
+    targets: ['path.edge'],
     d: [{value: function(el) {
       const n_id = $(el).attr("nid");
       const node = node_map[n_id], f = result[n_id];
       const fx = f[0] * NODE_W + 10 + BASE_X, fy = f[1] * NODE_H + 10 + BASE_Y;
-      const child = ($(el).hasClass('edge-l') ? node.left : node.right);
-      if(child !== null) {
-        const t = result[child.id];
-        const tx = t[0] * NODE_W + 10 + BASE_X, ty = t[1] * NODE_H + 10 + BASE_Y;
-        return `M${fx},${fy}L${tx},${ty}`;
+
+      const l_child = node.left, r_child = node.right;
+      let l_tx = fx, l_ty = fy;
+      if(l_child !== null) {
+        const t = result[l_child.id];
+        l_tx = t[0] * NODE_W + 10 + BASE_X;
+        l_ty = t[1] * NODE_H + 10 + BASE_Y;
       }
-      return `M${fx},${fy}L${fx},${fy}`;
+      let r_tx = fx, r_ty = fy;
+      if(r_child !== null) {
+        const t = result[r_child.id];
+        r_tx = t[0] * NODE_W + 10 + BASE_X;
+        r_ty = t[1] * NODE_H + 10 + BASE_Y;
+      }
+      return `M${l_tx},${l_ty}L${fx},${fy}L${r_tx},${r_ty}`;
     }}],
     offset: '-=1000',
     duration: 1000,
@@ -283,13 +291,11 @@ window.onload = () => {
     edges.append(createEdge(v, n_id, 'l'));
     edges.append(createEdge(v, n_id, 'r'));
     const node = $(`g.node${n_id}`);
-    const path_l = $(`path.edge${n_id}-l`);
-    const path_r = $(`path.edge${n_id}-r`);
+    const edge = $(`path.edge${n_id}`);
 
     node_view[v] = {
       "node": node,
-      "edge_l": path_l,
-      "edge_r": path_r,
+      "edge": edge,
     };
   };
 
@@ -324,7 +330,7 @@ window.onload = () => {
       let cursor = 0;
       for(let n_id in result_l[0]) {
         const v = result_l[0][n_id];
-        result[n_id] = v;
+        result[n_id] = [v[0], v[1] + 1];
       }
       cursor += Object.keys(result_l[0]).length + 2;
       for(let n_id in result_m[0]) {
@@ -334,7 +340,7 @@ window.onload = () => {
       cursor += Object.keys(result_m[0]).length + 2;
       for(let n_id in result_r[0]) {
         const v = result_r[0][n_id];
-        result[n_id] = [v[0] + cursor, v[1]];
+        result[n_id] = [v[0] + cursor, v[1] + 1];
       }
       translate_obj(result, tl);
 

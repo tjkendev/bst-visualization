@@ -27,12 +27,13 @@ function createNode(val, id) {
   return new_g;
 }
 
-function createEdge(val, id, t) {
+function createEdge(val, id) {
   const new_el = document.createElementNS("http://www.w3.org/2000/svg", 'path');
   new_el.setAttribute("stroke", "black");
   new_el.setAttribute("stroke-width", 3);
-  new_el.setAttribute("class", `edge${id}-${t} edge-${t}`);
-  new_el.setAttribute("d", `M25,25L25,25`);
+  new_el.setAttribute("class", `edge${id} edge`);
+  new_el.setAttribute("d", `M25,25L25,25L25,25`);
+  new_el.setAttribute("fill", "transparent");
   new_el.setAttribute("value", val);
   new_el.setAttribute("nid", id);
   return new_el;
