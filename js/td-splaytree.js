@@ -419,51 +419,50 @@ window.onload = () => {
       if(right !== null) {
         tree.root = right;
 
-        let updated = true;
-        while(true) {
-          const result = {};
-          const result_m = traverse(tree.root);
-          const result_r = traverse(tree.right);
-          max_depth = Math.max(max_depth, result_m[1], result_r[1]);
+        if(right.left !== null) {
+          let updated = true;
+          while(true) {
+            const result = {};
+            const result_m = traverse(tree.root);
+            const result_r = traverse(tree.right);
+            max_depth = Math.max(max_depth, result_m[1], result_r[1]);
 
-          let cursor = 0;
-          for(let n_id in result_l[0]) {
-            const v = result_l[0][n_id];
-            result[n_id] = [v[0], v[1] + 1];
-          }
-          cursor += Object.keys(result_l[0]).length + 2;
-          result[v_n_id] = [cursor, 0];
-          cursor += 2;
-          for(let n_id in result_m[0]) {
-            const v = result_m[0][n_id];
-            result[n_id] = [v[0] + cursor, v[1] + 1];
-          }
-          cursor += Object.keys(result_m[0]).length + 2;
-          for(let n_id in result_r[0]) {
-            const v = result_r[0][n_id];
-            result[n_id] = [v[0] + cursor, v[1] + 2];
-          }
-          translate_obj(result, tl);
-
-          if(!updated) break;
-          if(tree.is_splaying()) {
-            if(!tree.splaying_step()) {
-              tree.finish_splaying();
-              updated = false;
+            let cursor = 0;
+            for(let n_id in result_l[0]) {
+              const v = result_l[0][n_id];
+              result[n_id] = [v[0], v[1] + 1];
             }
-          } else {
-            tree.splaying_setup(v);
+            cursor += Object.keys(result_l[0]).length + 2;
+            result[v_n_id] = [cursor, 0];
+            cursor += 2;
+            for(let n_id in result_m[0]) {
+              const v = result_m[0][n_id];
+              result[n_id] = [v[0] + cursor, v[1] + 1];
+            }
+            cursor += Object.keys(result_m[0]).length + 2;
+            for(let n_id in result_r[0]) {
+              const v = result_r[0][n_id];
+              result[n_id] = [v[0] + cursor, v[1] + 2];
+            }
+            translate_obj(result, tl);
+
+            if(!updated) break;
+            if(tree.is_splaying()) {
+              if(!tree.splaying_step()) {
+                tree.finish_splaying();
+                updated = false;
+              }
+            } else {
+              tree.splaying_setup(v);
+            }
           }
         }
 
         tree.root.set_left(left);
         {
-          const result = {};
           const result_m = traverse(tree.root);
-          for(let n_id in result_m[0]) {
-            const v = result_m[0][n_id];
-            result[n_id] = [v[0], v[1]];
-          }
+          const result = result_m[0];
+          max_depth = Math.max(max_depth, result_m[1]);
           result[v_n_id] = [0, 0];
           translate_obj(result, tl);
         }
@@ -471,12 +470,9 @@ window.onload = () => {
       } else {
         tree.root = left;
         if(left !== null) {
-          const result = {};
           const result_m = traverse(tree.root);
-          for(let n_id in result_m[0]) {
-            const v = result_m[0][n_id];
-            result[n_id] = [v[0], v[1]];
-          }
+          const result = result_m[0];
+          max_depth = Math.max(max_depth, result_m[1]);
           result[v_n_id] = [0, 0];
           translate_obj(result, tl);
         }

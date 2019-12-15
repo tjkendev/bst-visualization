@@ -350,56 +350,52 @@ window.onload = () => {
       if(right !== null) {
         tree.root = right;
 
-        tree.find(v, false);
+        if(right.left !== null) {
+          tree.find(v, false);
 
-        let updated = true;
-        while(true) {
-          const result = {};
-          const result_r = traverse(tree.root);
+          let updated = true;
+          while(true) {
+            const result = {};
+            const result_r = traverse(tree.root);
 
-          let cursor = 0;
-          for(let n_id in result_l[0]) {
-            const v = result_l[0][n_id];
-            result[n_id] = [v[0], v[1] + 1];
+            let cursor = 0;
+            for(let n_id in result_l[0]) {
+              const v = result_l[0][n_id];
+              result[n_id] = [v[0], v[1] + 1];
+            }
+            cursor += Object.keys(result_l[0]).length + 2;
+            result[v_n_id] = [cursor, 0];
+            cursor += 2;
+            for(let n_id in result_r[0]) {
+              const v = result_r[0][n_id];
+              result[n_id] = [v[0] + cursor, v[1] + 1];
+            }
+
+            max_depth = Math.max(max_depth, result_r[1]);
+
+            translate_obj(result, tl);
+            if(!updated) {
+              break;
+            }
+            updated = tree.splaying_step();
           }
-          cursor += Object.keys(result_l[0]).length + 2;
-          result[v_n_id] = [cursor, 0];
-          cursor += 2;
-          for(let n_id in result_r[0]) {
-            const v = result_r[0][n_id];
-            result[n_id] = [v[0] + cursor, v[1] + 1];
-          }
-
-          max_depth = Math.max(max_depth, result_r[1]);
-
-          translate_obj(result, tl);
-          if(!updated) {
-            break;
-          }
-          updated = tree.splaying_step();
+          update_nodes.push(...tree.get_update_nodes());
         }
-        update_nodes.push(...tree.get_update_nodes());
 
         tree.root.set_left(left);
         {
-          const result = {};
           const result_m = traverse(tree.root);
-          for(let n_id in result_m[0]) {
-            const v = result_m[0][n_id];
-            result[n_id] = [v[0], v[1]];
-          }
+          const result = result_m[0];
+          max_depth = Math.max(max_depth, result_m[1]);
           result[v_n_id] = [0, 0];
           translate_obj(result, tl);
         }
       } else {
         tree.root = left;
         if(left !== null) {
-          const result = {};
           const result_m = traverse(tree.root);
-          for(let n_id in result_m[0]) {
-            const v = result_m[0][n_id];
-            result[n_id] = [v[0], v[1]];
-          }
+          const result = result_m[0];
+          max_depth = Math.max(max_depth, result_m[1]);
           result[v_n_id] = [0, 0];
           translate_obj(result, tl);
         }
@@ -440,12 +436,6 @@ window.onload = () => {
 
   const add_tree_node = (v) => {
     const tree = splay_tree;
-    const r = tree.find(v, true);
-    if(r !== null) {
-      const n_id = r.id;
-      add_node(v, n_id);
-      node_map[n_id] = r;
-    }
     if(tl !== null) {
       tl.seek(tl.duration);
     }
@@ -453,8 +443,18 @@ window.onload = () => {
       duration: 1000,
     });
 
+    const result_f = traverse(tree.root);
+    let max_depth = result_f[1];
+    translate_obj(result_f[0], tl);
+
+    const r = tree.find(v, true);
+    if(r !== null) {
+      const n_id = r.id;
+      add_node(v, n_id);
+      node_map[n_id] = r;
+    }
+
     let updated = true;
-    let max_depth = 0;
     while(true) {
       const result = traverse(tree.root);
 
