@@ -10,6 +10,10 @@
   fill: white;
 }
 
+.deleted-node {
+  fill: gray;
+}
+
 g.node circle {
   display: inline-block;
   width: 100px;

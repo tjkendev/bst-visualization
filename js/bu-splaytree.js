@@ -244,7 +244,7 @@ function translate_obj(result, tl) {
     easing: 'linear',
   }).add({
     targets: ['path.edge'],
-    d: [{value: function(el) {
+    d: [{value: (el) => {
       const n_id = $(el).attr("nid");
       const node = node_map[n_id], f = result[n_id];
       const fx = f[0] * NODE_W + 10 + BASE_X, fy = f[1] * NODE_H + 10 + BASE_Y;
@@ -475,7 +475,7 @@ window.onload = () => {
       const updateNode = node_view[node.val].node;
       updateNode.find("circle").removeClass("normal-node").addClass("update-node");
     }
-    tl.complete = function() {
+    tl.complete = () => {
       targetNode.find("circle").removeClass("target-node").addClass("normal-node");
       for(let node of update_nodes) {
         const updateNode = node_view[node.val].node;

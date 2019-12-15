@@ -1,16 +1,20 @@
 <html>
   <head>
-    <title>Visualization (Bottom-Up Splay Tree)</title>
+    <title>Visualization (Scapegoat Tree)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/2.2.0/anime.js" integrity="sha256-kRbW+SRRXPogeps8ZQcw2PooWEDPIjVQmN1ocWVQHRY=" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="../css/app.css" />
     <script type="text/javascript" src="../js/app-common.js"></script>
-    <script type="text/javascript" src="../js/bu-splaytree.js"></script>
+    <script type="text/javascript" src="../js/scapegoat-tree.js"></script>
   </head>
   <body>
     <div class="container">
-      <h1>Visualization (Bottom-Up Splay Tree)</h1>
+      <h1>Visualization (Scapegoat Tree)</h1>
       <p>追加できるKeyの値の範囲は 0 ~ 999 です</p>
+      <div>
+        <span>alpha(0.5 ~ 1.0): </span>
+        <input class="alpha-value" type="text" placeholder="0.5 ~ 1.0 (default 0.7)" value="0.7" />
+      </div>
       <div>
         <input class="node-key" type="text" placeholder="0 ~ 999" />
         <button class="add" type="button">追加/検索</button>
