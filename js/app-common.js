@@ -9,6 +9,7 @@ function createNode(val, id) {
   new_g.setAttribute("style", "transform: translateX(15px) translateY(15px)");
   new_g.setAttribute("value", val);
   new_g.setAttribute("nid", id);
+  new_g.setAttribute("opacity", 1.0);
 
   const new_circle = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
   new_circle.setAttribute("class", "normal-node");
@@ -36,7 +37,23 @@ function createEdge(val, id) {
   new_el.setAttribute("fill", "transparent");
   new_el.setAttribute("value", val);
   new_el.setAttribute("nid", id);
+  new_el.setAttribute("opacity", 1.0);
   return new_el;
+}
+
+function removeNode(id) {
+  const es = document.getElementsByClassName(`node${id}`);
+  for(let e of es) {
+    e.remove();
+  }
+}
+
+function removeEdge(id) {
+  const es = document.getElementsByClassName(`edge${id}`);
+  for(let e of es) {
+    e.remove();
+    console.log(e);
+  }
 }
 
 function traverse(root) {

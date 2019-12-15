@@ -31,6 +31,7 @@ g.node circle {
   position: absolute;
   overflow: scroll;
   border: 1px solid #000;
+  margin: 5px;
 }
 
 .node-text {

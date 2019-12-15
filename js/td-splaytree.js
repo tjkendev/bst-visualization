@@ -9,18 +9,33 @@ class Node {
     this.id = ++node_id_gen;
   }
 
-  remove_child(child) {
-    if(this.left === child) {
-      this.left = child.prt = null;
+  remove_child(node) {
+    if(this.left === node) {
+      this.remove_left();
     }
-    if(this.right === child) {
-      this.right = child.prt = null;
+    if(this.right === node) {
+      this.remove_right();
     }
+  }
+
+  remove_left() {
+    const left = this.left;
+    if(left !== null) {
+      this.left = left.prt = null;
+    }
+    return left;
+  }
+  remove_right() {
+    const right = this.right;
+    if(right !== null) {
+      this.right = right.prt = null;
+    }
+    return right;
   }
 
   set_left(node) {
     if(this.left !== null) {
-      this.remove_child(this.left);
+      this.remove_left();
     }
     this.left = node;
 
@@ -34,7 +49,7 @@ class Node {
 
   set_right(node) {
     if(this.right !== null) {
-      this.remove_child(this.right);
+      this.remove_right();
     }
     this.right = node;
 
@@ -127,6 +142,10 @@ class TopDownSplayTree {
     return this.pv !== null;
   }
 
+  finish_splaying() {
+    this.pv = null;
+  }
+
   insert(x) {
     // call this function after splaying is complete
     const root = this.root;
@@ -198,9 +217,8 @@ class TopDownSplayTree {
         x = y;
       }
       // zig-zig (second rotation) or zig-zag (simplified)
-      const l = x.left;
+      const l = x.remove_left();
       this.root = l;
-      x.remove_child(l);
 
       this.add_right(x);
     } else {
@@ -218,9 +236,8 @@ class TopDownSplayTree {
         x = y;
       }
       // zig-zig (second rotation) or zig-zag (simplified)
-      const r = x.right;
+      const r = x.remove_right();
       this.root = r;
-      x.remove_child(r);
 
       this.add_left(x);
     }
@@ -255,7 +272,7 @@ function translate_obj(result, tl) {
     easing: 'linear',
   }).add({
     targets: ['path.edge'],
-    d: [{value: function(el) {
+    d: [{value: (el) => {
       const n_id = $(el).attr("nid");
       const node = node_map[n_id], f = result[n_id];
       const fx = f[0] * NODE_W + 10 + BASE_X, fy = f[1] * NODE_H + 10 + BASE_Y;
@@ -288,8 +305,7 @@ window.onload = () => {
 
   const add_node = (v, n_id) => {
     nodes.append(createNode(v, n_id));
-    edges.append(createEdge(v, n_id, 'l'));
-    edges.append(createEdge(v, n_id, 'r'));
+    edges.append(createEdge(v, n_id));
     const node = $(`g.node${n_id}`);
     const edge = $(`path.edge${n_id}`);
 
@@ -306,16 +322,7 @@ window.onload = () => {
     });
   };
 
-  const add_tree_node = (v) => {
-    const tree = splay_tree;
-
-    if(tl !== null) {
-      tl.seek(tl.duration);
-    }
-    tl = anime.timeline({
-      duration: 1000,
-    });
-
+  const splaying = (tl, tree, v, need_to_add) => {
     let max_depth = 0;
 
     let updated = true;
@@ -332,6 +339,7 @@ window.onload = () => {
         const v = result_l[0][n_id];
         result[n_id] = [v[0], v[1] + 1];
       }
+
       cursor += Object.keys(result_l[0]).length + 2;
       for(let n_id in result_m[0]) {
         const v = result_m[0][n_id];
@@ -347,12 +355,16 @@ window.onload = () => {
       if(!updated) break;
       if(tree.is_splaying()) {
         if(!tree.splaying_step()) {
-          const r = tree.insert(v);
-          if(r !== null) {
-            // added a new node
-            const n_id = r.id;
-            add_node(v, n_id);
-            node_map[n_id] = r;
+          if(need_to_add) {
+            const r = tree.insert(v);
+            if(r !== null) {
+              // added a new node
+              const n_id = r.id;
+              add_node(v, n_id);
+              node_map[n_id] = r;
+            }
+          } else {
+            tree.finish_splaying();
           }
           updated = false;
         }
@@ -360,6 +372,160 @@ window.onload = () => {
         tree.splaying_setup(v);
       }
     }
+
+    return max_depth;
+  }
+
+  const remove_tree_node = (v) => {
+    const tree = splay_tree;
+    const node_num = Object.keys(node_view).length;
+
+    if(tl !== null) {
+      tl.seek(tl.duration);
+    }
+    tl = anime.timeline({
+      duration: 1000,
+    });
+
+    let max_depth = splaying(tl, tree, v, false);
+
+    const update_nodes = [];
+    update_nodes.push(...tree.get_update_nodes());
+
+    const node = tree.root;
+    let v_n_id = null;
+    let targetNode = null;
+
+    if(node.val === v) {
+      const left = node.remove_left(), right = node.remove_right();
+
+      const result_l = traverse(left);
+
+      v_n_id = node.id;
+      targetNode = node_view[v].node;
+
+      tl.add({
+        targets: [`path.edge${v_n_id}`],
+        opacity: 0,
+        duration: 500,
+        easing: 'linear',
+      }).add({
+        targets: [`g.node${v_n_id}`],
+        opacity: 0,
+        duration: 500,
+        easing: 'linear',
+      });
+
+      if(right !== null) {
+        tree.root = right;
+
+        let updated = true;
+        while(true) {
+          const result = {};
+          const result_m = traverse(tree.root);
+          const result_r = traverse(tree.right);
+          max_depth = Math.max(max_depth, result_m[1], result_r[1]);
+
+          let cursor = 0;
+          for(let n_id in result_l[0]) {
+            const v = result_l[0][n_id];
+            result[n_id] = [v[0], v[1] + 1];
+          }
+          cursor += Object.keys(result_l[0]).length + 2;
+          result[v_n_id] = [cursor, 0];
+          cursor += 2;
+          for(let n_id in result_m[0]) {
+            const v = result_m[0][n_id];
+            result[n_id] = [v[0] + cursor, v[1] + 1];
+          }
+          cursor += Object.keys(result_m[0]).length + 2;
+          for(let n_id in result_r[0]) {
+            const v = result_r[0][n_id];
+            result[n_id] = [v[0] + cursor, v[1] + 2];
+          }
+          translate_obj(result, tl);
+
+          if(!updated) break;
+          if(tree.is_splaying()) {
+            if(!tree.splaying_step()) {
+              tree.finish_splaying();
+              updated = false;
+            }
+          } else {
+            tree.splaying_setup(v);
+          }
+        }
+
+        tree.root.set_left(left);
+        {
+          const result = {};
+          const result_m = traverse(tree.root);
+          for(let n_id in result_m[0]) {
+            const v = result_m[0][n_id];
+            result[n_id] = [v[0], v[1]];
+          }
+          result[v_n_id] = [0, 0];
+          translate_obj(result, tl);
+        }
+        update_nodes.push(...tree.get_update_nodes());
+      } else {
+        tree.root = left;
+        if(left !== null) {
+          const result = {};
+          const result_m = traverse(tree.root);
+          for(let n_id in result_m[0]) {
+            const v = result_m[0][n_id];
+            result[n_id] = [v[0], v[1]];
+          }
+          result[v_n_id] = [0, 0];
+          translate_obj(result, tl);
+        }
+      }
+
+      delete node_view[v];
+      delete node_map[v_n_id];
+    }
+
+    if(targetNode !== null) {
+      targetNode.find("circle").removeClass("normal-node").addClass("target-node");
+    }
+    for(let node of update_nodes) {
+      const updateNode = node_view[node.val].node;
+      updateNode.find("circle").removeClass("normal-node").addClass("update-node");
+    }
+    tl.complete = () => {
+      if(targetNode !== null) {
+        targetNode.find("circle").removeClass("target-node").addClass("normal-node");
+      }
+      for(let node of update_nodes) {
+        const updateNode = node_view[node.val].node;
+        updateNode.find("circle").removeClass("update-node").addClass("normal-node");
+      }
+
+      if(v_n_id !== null) {
+        // remove selected node
+        removeNode(v_n_id);
+        removeEdge(v_n_id);
+      }
+    };
+
+    change_canvas_size(
+      (node_num+5) * NODE_W + BASE_X*2,
+      (max_depth+1) * NODE_H + BASE_Y*2
+    );
+  };
+
+  const add_tree_node = (v) => {
+    const tree = splay_tree;
+
+    if(tl !== null) {
+      tl.seek(tl.duration);
+    }
+    tl = anime.timeline({
+      duration: 1000,
+    });
+
+    const max_depth = splaying(tl, tree, v, true);
 
     const targetNode = node_view[v].node;
 
@@ -369,7 +535,7 @@ window.onload = () => {
       const updateNode = node_view[node.val].node;
       updateNode.find("circle").removeClass("normal-node").addClass("update-node");
     }
-    tl.complete = function() {
+    tl.complete = () => {
       targetNode.find("circle").removeClass("target-node").addClass("normal-node");
       for(let node of update_nodes) {
         const updateNode = node_view[node.val].node;
@@ -388,11 +554,27 @@ window.onload = () => {
     add_tree_node(v);
   });
 
+  $(".remove-random").click((el) => {
+    const vs = Object.keys(node_view);
+    if(vs.length > 0) {
+      const v = parseInt(vs[Math.floor(Math.random() * vs.length)]);
+      remove_tree_node(v);
+    }
+  });
+
   $(".add").click((el) => {
     const val = $(".node-key").val();
     const v = parseInt(val, 10);
     if(!isNaN(v) && 0 <= v && v <= 999) {
       add_tree_node(v);
+    }
+  });
+
+  $(".remove").click((el) => {
+    const val = $(".node-key").val();
+    const v = parseInt(val, 10);
+    if(!isNaN(v) && 0 <= v && v <= 999) {
+      remove_tree_node(v);
     }
   });
 };
