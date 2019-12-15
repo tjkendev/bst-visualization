@@ -22,13 +22,18 @@ g.node circle {
   border: solid 3px black;
 }
 
+path.edge {
+  stroke: black;
+  stroke-width: 3px;
+  fill: transparent;
+}
+
 .canvas-parts {
   width: 100%;
   height: 100%;
 }
 
 .canvas {
-  position: absolute;
   overflow: scroll;
   border: 1px solid #000;
   margin: 5px;
