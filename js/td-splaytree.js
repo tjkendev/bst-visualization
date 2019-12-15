@@ -461,7 +461,11 @@ window.onload = () => {
         tree.root.set_left(left);
         {
           const result_m = traverse(tree.root);
-          const result = result_m[0];
+          const result = {};
+          for(let n_id in result_m[0]) {
+            const v = result_m[0][n_id];
+            result[n_id] = [v[0] + 2, v[1]];
+          }
           max_depth = Math.max(max_depth, result_m[1]);
           result[v_n_id] = [0, 0];
           translate_obj(result, tl);
@@ -471,7 +475,11 @@ window.onload = () => {
         tree.root = left;
         if(left !== null) {
           const result_m = traverse(tree.root);
-          const result = result_m[0];
+          const result = {};
+          for(let n_id in result_m[0]) {
+            const v = result_m[0][n_id];
+            result[n_id] = [v[0] + 2, v[1]];
+          }
           max_depth = Math.max(max_depth, result_m[1]);
           result[v_n_id] = [0, 0];
           translate_obj(result, tl);
