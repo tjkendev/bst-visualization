@@ -6,9 +6,11 @@ Binary Search Tree Visualization
 
 以下のBSTをWebページ上で可視化したものです。
 
+- Binary Search Tree
 - Bottom-Up Splay Tree
 - Top-Down Splay Tree
 - Scapegoat Tree
+- Randomized Binary Search Tree
 
 以下から見ることができます。
 

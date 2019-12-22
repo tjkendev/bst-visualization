@@ -12,7 +12,6 @@ class Node {
     this.prt = null;
     this.val = val;
     this.id = ++node_id_gen;
-    this.size = 1;
   }
 
   remove_child(node) {
@@ -28,7 +27,6 @@ class Node {
     const left = this.left;
     if(left !== null) {
       this.left = left.prt = null;
-      this.size -= left.size;
     }
     return left;
   }
@@ -36,7 +34,6 @@ class Node {
     const right = this.right;
     if(right !== null) {
       this.right = right.prt = null;
-      this.size -= right.size;
     }
     return right;
   }
@@ -49,7 +46,6 @@ class Node {
         node.prt.remove_child(node);
       }
       node.prt = this;
-      this.size += node.size;
     }
 
     this.left = node;
@@ -63,47 +59,8 @@ class Node {
         node.prt.remove_child(node);
       }
       node.prt = this;
-      this.size += node.size;
     }
     this.right = node;
-  }
-
-  rotate_left() {
-    const r = this.right;
-    const p = this.prt, is_left = (p !== null && p.is_left(this));
-    if(r === null) {
-      return null;
-    }
-    this.set_right(r.left);
-    r.set_left(this);
-
-    if(p !== null) {
-      if(is_left) {
-        p.set_left(r);
-      } else {
-        p.set_right(r);
-      }
-    }
-    return r;
-  }
-
-  rotate_right() {
-    const l = this.left;
-    const p = this.prt, is_left = (p !== null && p.is_left(this));
-    if(l === null) {
-      return null;
-    }
-    this.set_left(l.right);
-    l.set_right(this);
-
-    if(p !== null) {
-      if(is_left) {
-        p.set_left(l);
-      } else {
-        p.set_right(l);
-      }
-    }
-    return l;
   }
 
   is_left(node) {
@@ -113,23 +70,12 @@ class Node {
   is_right(node) {
     return this.right === node;
   }
-
-  update_size() {
-    let size = 1;
-    if(this.left !== null) size += this.left.size;
-    if(this.right !== null) size += this.right.size;
-    return this.size = size;
-  }
 }
 
-class RandomizedBinarySearchTree {
+class BinarySearchTree {
   constructor() {
     this.root = null;
-    this.left = this.right = null;
-    this.pv = -1;
-    this.cur = null;
     this.update_nodes = new Set();
-    this.prv_d = -1;
   }
 
   find(x) {
@@ -154,63 +100,8 @@ class RandomizedBinarySearchTree {
     return false;
   }
 
-  finish_delete() {
-    let node = this.cur;
-    while(node !== null) {
-      node.update_size();
-      node = node.prt;
-    }
-  }
-
-  delete_step() {
-    if(this.left === null || this.right === null) {
-      const node = (this.left || this.right);
-      if(node !== null) {
-        this.update_nodes.add(node);
-      }
-      if(this.prv_d == 0) {
-        this.cur.set_left(node);
-      } else if(this.prv_d == 1) {
-        this.cur.set_right(node);
-      } else {
-        this.root = node;
-      }
-      this.cur = node;
-      this.left = this.right = null;
-      return false;
-    }
-    const a = this.left.size, b = this.right.size;
-    if(randint(a + b) < a) {
-      const left = this.left;
-      this.update_nodes.add(left);
-      if(this.prv_d === 0) {
-        this.cur.set_left(left);
-      } else if(this.prv_d === 1) {
-        this.cur.set_right(left);
-      } else {
-        this.root = left;
-      }
-      this.cur = left;
-      this.left = left.remove_right();
-      this.prv_d = 1;
-    } else {
-      const right = this.right;
-      this.update_nodes.add(right);
-      if(this.prv_d === 1) {
-        this.cur.set_right(right);
-      } else if(this.prv_d === 0) {
-        this.cur.set_left(right);
-      } else {
-        this.root = right;
-      }
-      this.cur = right;
-      this.right = right.remove_left();
-      this.prv_d = 0;
-    }
-    return true;
-  }
-
-  prepare_delete(x) {
+  remove(x) {
+    this.update_nodes = new Set();
     let node = this.root;
     while(node !== null) {
       if(node.val === x) break;
@@ -226,70 +117,48 @@ class RandomizedBinarySearchTree {
       return null;
     }
 
-    if(node.prt !== null) {
-      const prt = node.prt;
-      this.prv_d = (prt.is_left(node) ? 0 : 1);
-      prt.remove_child(node);
-      this.cur = prt;
-    } else {
-      this.prv_d = -1;
-      this.root = this.cur = null;
+    const prt = node.prt;
+    if(node.left === null || node.right === null) {
+      const n_node = node.left || node.right;
+      if(prt !== null) {
+        if(x < prt.val) {
+          prt.set_left(n_node);
+        } else {
+          prt.set_right(n_node);
+        }
+      } else {
+        this.root = n_node;
+      }
+    } else if(node.left !== null && node.right !== null) {
+      let c_node = node.right;
+      while(c_node.left !== null) {
+        this.update_nodes.add(c_node);
+        c_node = c_node.left;
+      }
+      this.update_nodes.add(c_node);
+      const c_prt = c_node.prt;
+      if(!node.is_right(c_node)) {
+        c_prt.set_left(c_node.right);
+        c_node.set_right(node.right);
+      }
+      if(prt !== null) {
+        if(x < prt.val) {
+          prt.set_left(c_node);
+        } else {
+          prt.set_right(c_node);
+        }
+      } else {
+        this.root = c_node;
+      }
+      c_node.set_left(node.left);
     }
-
-    this.left = node.remove_left();
-    this.right = node.remove_right();
     return node;
   }
 
-  insert_step() {
-    const node = this.cur;
-    if(node === null) {
-      return false;
-    }
-    this.update_nodes.add(node);
-    if(node.val < this.pv) {
-      const left = this.left;
-      if(left.val == this.pv) {
-        left.set_left(node);
-      } else {
-        left.set_right(node);
-      }
-      this.cur = node.remove_right();
-      this.left = node;
-    } else {
-      const right = this.right;
-      if(right.val == this.pv) {
-        right.set_right(node);
-      } else {
-        right.set_left(node);
-      }
-      this.cur = node.remove_left();
-      this.right = node;
-    }
-    return true;
-  }
-
-  finish_insert() {
-    let node;
-    node = this.left;
-    while(node !== null) {
-      node.update_size();
-      node = node.prt;
-    }
-    node = this.right;
-    while(node !== null) {
-      node.update_size();
-      node = node.prt;
-    }
-  }
-
-  prepare_insert(x) {
-    // before insert(), check if key = x does not exist in the tree
+  insert(x) {
     this.update_nodes = new Set();
     const new_node = new Node(x);
-    this.left = this.right = new_node;
     let prv = null;
-    this.pv = x;
     if(this.root == null) {
       this.root = new_node;
       this.cur = null;
@@ -297,8 +166,8 @@ class RandomizedBinarySearchTree {
     }
     let node = this.root;
     while(node !== null) {
-      if(node.size <= randint(node.size + 1)) {
-        break;
+      if(node.val === x) {
+        return null;
       }
       prv = node;
       this.update_nodes.add(node);
@@ -318,8 +187,6 @@ class RandomizedBinarySearchTree {
     } else {
       this.root = new_node;
     }
-
-    this.cur = node;
     return new_node;
   }
 
@@ -328,7 +195,7 @@ class RandomizedBinarySearchTree {
   }
 }
 
-const rbst = new RandomizedBinarySearchTree();
+const bst = new BinarySearchTree();
 
 const node_view = {};
 const node_map = {};
@@ -402,7 +269,7 @@ window.onload = () => {
   };
 
   const remove_tree_node = (v) => {
-    const tree = rbst;
+    const tree = bst;
     const node_num = Object.keys(node_view).length;
 
     if(tl !== null) {
@@ -427,7 +294,7 @@ window.onload = () => {
     let v_n_id = null;
     let targetNode = null;
     if(tree.find(v)) {
-      const node = tree.prepare_delete(v);
+      const node = tree.remove(v);
 
       targetNode = node_view[v].node;
       v_n_id = node.id;
@@ -444,53 +311,10 @@ window.onload = () => {
         easing: 'linear',
       });
 
-      let updated = true;
-      while(tree.delete_step()) {
-        const result = {};
-        const result_l = traverse(tree.left);
-        const result_m = traverse(tree.root);
-        const result_r = traverse(tree.right);
-
-        max_depth = Math.max(max_depth, result_m[1]);
-
-        const tmp = [];
-        for(let n_id in result_m[0]) {
-          const v = result_m[0][n_id];
-          const node = node_map[n_id];
-          tmp.push([node, v[1]]);
-        }
-        const c_base = (tree.cur !== null ? result_m[0][tree.cur.id][1] : 0);
-        max_depth = Math.max(max_depth, result_l[1] + c_base + 2, result_r[1] + c_base + 2);
-        for(let n_id in result_l[0]) {
-          const v = result_l[0][n_id];
-          const node = node_map[n_id];
-          tmp.push([node, v[1] + c_base + 2]);
-        }
-        for(let n_id in result_r[0]) {
-          const v = result_r[0][n_id];
-          const node = node_map[n_id];
-          tmp.push([node, v[1] + c_base + 2]);
-        }
-        tmp.push([node, 0]);
-        tmp.sort((x, y) => x[0].val - y[0].val);
-        let cursor = 0;
-        for(let e of tmp) {
-          const node = e[0], pos = e[1];
-          result[node.id] = [cursor++, pos];
-        }
-        translate_obj(result, tl);
-      }
-
-      tree.finish_delete();
-
-      {
-        const result_m = traverse(tree.root);
-        const result = result_m[0];
-        result[v_n_id] = [0, 0];
-        max_depth = Math.max(max_depth, result_m[1]);
-
-        translate_obj(result_m[0], tl);
-      }
+      const result_m = traverse(tree.root);
+      const result = result_m[0];
+      result[v_n_id] = [0, 0];
+      translate_obj(result, tl);
 
       for(let e of tree.get_update_nodes()) {
         update_nodes.add(e);
@@ -532,7 +356,7 @@ window.onload = () => {
   };
 
   const add_tree_node = (v) => {
-    const tree = rbst;
+    const tree = bst;
 
     if(tl !== null) {
       tl.seek(tl.duration);
@@ -552,48 +376,15 @@ window.onload = () => {
     }
 
     if(!tree.find(v)) {
-      const node = tree.prepare_insert(v);
+      const node = tree.insert(v);
+
       const v_n_id = node.id;
-      if(node !== null) {
-        add_node(v, node.id);
-        node_map[node.id] = node;
-      }
-      let updated = true;
-      while(true) {
-        const result = {};
-        const result_m = traverse(tree.root);
-        const result_c = traverse(tree.cur);
+      add_node(v, node.id);
+      node_map[node.id] = node;
 
-        max_depth = Math.max(max_depth, result_m[1]);
-        const tmp = [];
-
-        for(let n_id in result_m[0]) {
-          const v = result_m[0][n_id];
-          const node = node_map[n_id];
-          tmp.push([node, v[1]]);
-        }
-        const c_base = Math.max(result_m[0][tree.left.id][1], result_m[0][tree.right.id][1]);
-        max_depth = Math.max(max_depth, result_c[1] + c_base + 2);
-        for(let n_id in result_c[0]) {
-          const v = result_c[0][n_id];
-          const node = node_map[n_id];
-          tmp.push([node, v[1] + c_base + 2]);
-        }
-        tmp.sort((x, y) => x[0].val - y[0].val);
-        let cursor = 0;
-        for(let e of tmp) {
-          const node = e[0], pos = e[1];
-          result[node.id] = [cursor++, pos];
-        }
-        translate_obj(result, tl);
-
-        if(!updated) {
-          break;
-        }
-        updated = tree.insert_step();
-      }
-
-      tree.finish_insert();
+      const result_m = traverse(tree.root);
+      translate_obj(result_m[0], tl);
+      max_depth = Math.max(max_depth, result_m[1]);
     }
 
     const targetNode = node_view[v].node;
