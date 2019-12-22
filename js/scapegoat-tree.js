@@ -118,11 +118,14 @@ class ScapegoatTree {
     this.alpha = 0.7;
     this.update_nodes = new Set();
     this.disable_nodes = new Set();
+    this.rebuild_nodes = [];
   }
 
   clear() {
     this.root = null;
     this.cur = null;
+    this.dir = -1;
+    this.prt = null;
     this.disable_count = 0;
   }
 
@@ -236,8 +239,9 @@ class ScapegoatTree {
     return node;
   }
 
-  rebuild_nodes(node) {
-    const es = [];
+  collect_nodes(node) {
+    this.rebuild_nodes = [];
+    const es = this.rebuild_nodes;
     const traverse_dfs = (nd) => {
       if(nd.left !== null) {
         traverse_dfs(nd.left);
@@ -257,7 +261,10 @@ class ScapegoatTree {
       nd.clear();
     };
     traverse_dfs(node);
+  }
 
+  build_nodes() {
+    const es = this.rebuild_nodes;
     let cur = 0;
     const construct_dfs = (rest) => {
       if(rest === 1) {
@@ -276,7 +283,37 @@ class ScapegoatTree {
       return null;
     }
     const r = construct_dfs(es.length);
+    this.rebuild_nodes = [];
     return r;
+  }
+
+  prepare_rebuild() {
+    if(this.cur === null) {
+      return false;
+    }
+
+    const node = this.cur;
+
+    const prt = node.prt;
+    this.prt = prt;
+    if(prt === null) {
+      this.root = null;
+    } else {
+      if(prt.is_left(node)) {
+        prt.remove_left();
+        this.dir = 0;
+      } else {
+        prt.remove_right();
+        this.dir = 1;
+      }
+      let cur = prt;
+      while(cur !== null) {
+        cur.update_size();
+        cur = cur.prt;
+      }
+    }
+    this.collect_nodes(node);
+    return true;
   }
 
   rebuild() {
@@ -287,16 +324,14 @@ class ScapegoatTree {
     const node = this.cur;
     this.cur = null;
 
-    const prt = node.prt;
+    const prt = this.prt;
     if(prt === null) {
-      this.root = this.rebuild_nodes(node);
+      this.root = this.build_nodes();
     } else {
-      if(prt.is_left(node)) {
-        prt.remove_left();
-        prt.set_left(this.rebuild_nodes(node));
+      if(this.dir === 0) {
+        prt.set_left(this.build_nodes());
       } else {
-        prt.remove_right();
-        prt.set_right(this.rebuild_nodes(node));
+        prt.set_right(this.build_nodes());
       }
       let cur = prt;
       while(cur !== null) {
@@ -304,6 +339,7 @@ class ScapegoatTree {
         cur = cur.prt;
       }
     }
+    this.cur = null;
     return true;
   }
 
@@ -409,7 +445,10 @@ window.onload = () => {
     if(r !== null) {
       targetNode = node_view[v].node;
       const v_n_id = r.id;
-      if(tree.rebuild()) {
+      if(tree.prepare_rebuild()) {
+        max_depth = Math.max(max_depth, translate_tree(tree, true));
+        tl.add({ duration: 200 });
+        tree.rebuild();
         max_depth = Math.max(max_depth, translate_tree(tree));
       }
 
@@ -456,9 +495,35 @@ window.onload = () => {
     );
   }
 
-  const translate_tree = (tree) => {
+  const translate_tree = (tree, rebuilding) => {
     const result_m = traverse(tree.root);
-    const result = result_m[0];
+    const result = {};
+    const tmp = [];
+    const r_base = result_m[1];
+    let max_depth = result_m[1];
+    for(let n_id in result_m[0]) {
+      const v = result_m[0][n_id];
+      const node = node_map[n_id];
+      tmp.push([node, v[1], 0]);
+    }
+    if(rebuilding) {
+      const result_r = tree.rebuild_nodes;
+      for(let node of result_r) {
+        tmp.push([node, 0, 1]);
+      }
+      max_depth = Math.max(max_depth, r_base+2);
+    }
+    tmp.sort((x, y) => x[0].val - y[0].val);
+    let cursor = 0, flp = 1;
+    for(let e of tmp) {
+      const node = e[0], pos = e[1], tp = e[2];
+      if(tp === 1) {
+        result[node.id] = [cursor++, r_base+flp];
+        flp ^= 3;
+      } else {
+        result[node.id] = [cursor++, pos];
+      }
+    }
     const disable_nodes = tree.get_disable_nodes();
     if(disable_nodes.size > 0) {
       const c_nodes = [], c_edges = [];
@@ -480,7 +545,7 @@ window.onload = () => {
       });
     }
     translate_obj(result, tl);
-    return result_m[1];
+    return max_depth;
   };
 
   const add_tree_node = (v) => {
@@ -504,7 +569,10 @@ window.onload = () => {
     max_depth = Math.max(max_depth, translate_tree(tree));
     let disable_nodes = new Set();
 
-    if(tree.rebuild()) {
+    if(tree.prepare_rebuild()) {
+      max_depth = Math.max(max_depth, translate_tree(tree, true));
+      tl.add({ duration: 200 });
+      tree.rebuild();
       max_depth = Math.max(max_depth, translate_tree(tree));
       disable_nodes = tree.get_disable_nodes();
 
