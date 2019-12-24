@@ -127,6 +127,7 @@ class BinarySearchTree {
           prt.set_right(n_node);
         }
       } else {
+        node.remove_child(n_node);
         this.root = n_node;
       }
     } else if(node.left !== null && node.right !== null) {
@@ -148,6 +149,7 @@ class BinarySearchTree {
           prt.set_right(c_node);
         }
       } else {
+        node.remove_right();
         this.root = c_node;
       }
       c_node.set_left(node.left);
