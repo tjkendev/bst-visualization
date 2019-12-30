@@ -1,18 +1,26 @@
 "use strict";
 
-// get a random integer within [0, x)
-function randint(x) {
-  return Math.floor(Math.random() * x);
-}
-
 let node_id_gen = 0;
 class Node {
   constructor(val) {
     this.left = this.right = null;
     this.prt = null;
     this.val = val;
+    this.height = 1;
     this.id = ++node_id_gen;
-    this.size = 1;
+  }
+
+  factor() {
+    const lv = (this.left !== null ? this.left.height : 0);
+    const rv = (this.right !== null ? this.right.height : 0);
+    return rv - lv;
+  }
+
+  update_height() {
+    this.height = Math.max(
+      (this.left !== null ? this.left.height : 0),
+      (this.right !== null ? this.right.height : 0)
+    ) + 1;
   }
 
   remove_child(node) {
@@ -22,50 +30,96 @@ class Node {
     if(this.right === node) {
       this.remove_right();
     }
+    this.update_height();
   }
 
   remove_left() {
     const left = this.left;
     if(left !== null) {
       this.left = left.prt = null;
-      this.size -= left.size;
     }
+    this.update_height();
     return left;
   }
   remove_right() {
     const right = this.right;
     if(right !== null) {
       this.right = right.prt = null;
-      this.size -= right.size;
     }
+    this.update_height();
     return right;
   }
 
   set_left(node) {
-    this.remove_left();
+    if(this.left !== null) {
+      this.remove_left();
+    }
+    this.left = node;
 
     if(node !== null) {
       if(node.prt !== null) {
         node.prt.remove_child(node);
       }
       node.prt = this;
-      this.size += node.size;
     }
-
-    this.left = node;
+    this.update_height();
   }
 
   set_right(node) {
-    this.remove_right();
+    if(this.right !== null) {
+      this.remove_right();
+    }
+    this.right = node;
 
     if(node !== null) {
       if(node.prt !== null) {
         node.prt.remove_child(node);
       }
       node.prt = this;
-      this.size += node.size;
     }
-    this.right = node;
+    this.update_height();
+  }
+
+  rotate_left() {
+    const r = this.right;
+    const p = this.prt, is_left = (p !== null && p.is_left(this));
+    if(r === null) {
+      return null;
+    }
+    this.set_right(r.left);
+    this.update_height();
+    r.set_left(this);
+    r.update_height();
+
+    if(p !== null) {
+      if(is_left) {
+        p.set_left(r);
+      } else {
+        p.set_right(r);
+      }
+    }
+    return r;
+  }
+
+  rotate_right() {
+    const l = this.left;
+    const p = this.prt, is_left = (p !== null && p.is_left(this));
+    if(l === null) {
+      return null;
+    }
+    this.set_left(l.right);
+    this.update_height();
+    l.set_right(this);
+    l.update_height();
+
+    if(p !== null) {
+      if(is_left) {
+        p.set_left(l);
+      } else {
+        p.set_right(l);
+      }
+    }
+    return l;
   }
 
   is_left(node) {
@@ -75,32 +129,26 @@ class Node {
   is_right(node) {
     return this.right === node;
   }
-
-  update_size() {
-    let size = 1;
-    if(this.left !== null) size += this.left.size;
-    if(this.right !== null) size += this.right.size;
-    return this.size = size;
-  }
 }
 
-class RandomizedBinarySearchTree {
+class AVLTree {
   constructor() {
     this.root = null;
-    this.left = this.right = null;
-    this.pv = -1;
     this.cur = null;
+    this.prt = null;
     this.update_nodes = new Set();
-    this.prv_d = -1;
   }
 
-  find(x) {
+  insert(x) {
     this.update_nodes = new Set();
     if(this.root === null) {
-      return false;
+      return this.root = new Node(x);
     }
     let node = this.root;
-    while(node.val !== x) {
+    while(node !== null) {
+      if(node.val === x) {
+        return null;
+      }
       this.update_nodes.add(node);
       if(x < node.val) {
         if(node.left === null) break;
@@ -110,69 +158,20 @@ class RandomizedBinarySearchTree {
         node = node.right;
       }
     }
-    if(node.val === x) {
-      return true;
-    }
-    return false;
-  }
-
-  finish_delete() {
-    let node = this.cur;
-    while(node !== null) {
-      node.update_size();
-      node = node.prt;
-    }
-  }
-
-  delete_step() {
-    if(this.left === null || this.right === null) {
-      const node = (this.left || this.right);
-      if(node !== null) {
-        this.update_nodes.add(node);
-      }
-      if(this.prv_d == 0) {
-        this.cur.set_left(node);
-      } else if(this.prv_d == 1) {
-        this.cur.set_right(node);
-      } else {
-        this.root = node;
-      }
-      this.cur = node;
-      this.left = this.right = null;
-      return false;
-    }
-    const a = this.left.size, b = this.right.size;
-    if(randint(a + b) < a) {
-      const left = this.left;
-      this.update_nodes.add(left);
-      if(this.prv_d === 0) {
-        this.cur.set_left(left);
-      } else if(this.prv_d === 1) {
-        this.cur.set_right(left);
-      } else {
-        this.root = left;
-      }
-      this.cur = left;
-      this.left = left.remove_right();
-      this.prv_d = 1;
+    const new_node = new Node(x);
+    this.cur = new_node;
+    this.prt = node;
+    if(x < node.val) {
+      node.set_left(new_node);
     } else {
-      const right = this.right;
-      this.update_nodes.add(right);
-      if(this.prv_d === 1) {
-        this.cur.set_right(right);
-      } else if(this.prv_d === 0) {
-        this.cur.set_left(right);
-      } else {
-        this.root = right;
-      }
-      this.cur = right;
-      this.right = right.remove_left();
-      this.prv_d = 0;
+      node.set_right(new_node);
     }
-    return true;
+    return new_node;
   }
 
-  prepare_delete(x) {
+  remove(x) {
+    this.update_nodes = new Set();
+    this.cur = this.prt = null;
     let node = this.root;
     while(node !== null) {
       if(node.val === x) break;
@@ -183,114 +182,201 @@ class RandomizedBinarySearchTree {
         node = node.right;
       }
     }
-
     if(node === null) {
       return null;
     }
 
-    if(node.prt !== null) {
-      const prt = node.prt;
-      this.prv_d = (prt.is_left(node) ? 0 : 1);
-      prt.remove_child(node);
-      this.cur = prt;
-    } else {
-      this.prv_d = -1;
-      this.root = this.cur = null;
+    const prt = node.prt;
+    if(node.left === null || node.right === null) {
+      const n_node = node.left || node.right;
+      if(prt !== null) {
+        if(x < prt.val) {
+          prt.set_left(n_node);
+        } else {
+          prt.set_right(n_node);
+        }
+        this.prt = prt;
+        this.cur = n_node;
+      } else {
+        node.remove_child(n_node);
+        this.root = n_node;
+      }
+    } else if(node.left !== null && node.right !== null) {
+      let c_node = node.right;
+      while(c_node.left !== null) {
+        this.update_nodes.add(c_node);
+        c_node = c_node.left;
+      }
+      this.update_nodes.add(c_node);
+      const c_prt = c_node.prt;
+      let is_child = node.is_right(c_node);
+      if(!is_child) {
+        c_prt.set_left(c_node.right);
+        c_node.set_right(node.right);
+      }
+      c_node.set_left(node.left);
+      if(prt !== null) {
+        if(x < prt.val) {
+          prt.set_left(c_node);
+        } else {
+          prt.set_right(c_node);
+        }
+      } else {
+        node.remove_right();
+        this.root = c_node;
+      }
+      if(is_child) {
+        this.prt = c_node;
+        this.cur = c_node.right;
+      } else {
+        this.prt = c_prt;
+        this.cur = c_prt.left;
+      }
     }
-
-    this.left = node.remove_left();
-    this.right = node.remove_right();
     return node;
   }
 
-  insert_step() {
-    const node = this.cur;
-    if(node === null) {
-      return false;
-    }
-    this.update_nodes.add(node);
-    if(node.val < this.pv) {
-      const left = this.left;
-      if(left.val == this.pv) {
-        left.set_left(node);
-      } else {
-        left.set_right(node);
-      }
-      this.cur = node.remove_right();
-      this.left = node;
-    } else {
-      const right = this.right;
-      if(right.val == this.pv) {
-        right.set_right(node);
-      } else {
-        right.set_left(node);
-      }
-      this.cur = node.remove_left();
-      this.right = node;
-    }
-    return true;
+  is_retracing() {
+    return (this.prt !== null);
   }
 
-  finish_insert() {
-    let node;
-    node = this.left;
-    while(node !== null) {
-      node.update_size();
-      node = node.prt;
+  finish_retracing() {
+    this.cur = this.prt = null;
+  }
+
+  insert_retracing_step() {
+    const node = this.cur, prt = this.prt;
+    if(prt === null) {
+      return this.finish_retracing();
     }
-    node = this.right;
-    while(node !== null) {
-      node.update_size();
-      node = node.prt;
+    // assert (node !== null);
+    prt.update_height();
+    if(prt.is_left(node)) {
+      if(prt.factor() == -2) {
+        if(node.factor() > 0) {
+          node.rotate_left();
+          this.prt = prt.rotate_right();
+          if(this.prt.prt === null) {
+            this.root = node.prt;
+          }
+        } else {
+          prt.rotate_right();
+          this.prt = node.prt;
+          if(node.prt === null) {
+            this.root = node;
+          }
+        }
+        return true;
+      } else {
+        if(prt.factor() >= 0) {
+          return this.finish_retracing();
+        }
+        this.cur = prt;
+        this.prt = prt.prt;
+        return false;
+      }
+    } else {
+      if(prt.factor() == 2) {
+        if(node.factor() < 0) {
+          node.rotate_right();
+          this.prt = prt.rotate_left();
+          if(this.prt.prt === null) {
+            this.root = node.prt;
+          }
+        } else {
+          prt.rotate_left();
+          this.prt = node.prt;
+          if(node.prt === null) {
+            this.root = node;
+          }
+        }
+        return true;
+      } else {
+        if(prt.factor() <= 0) {
+          return this.finish_retracing();
+        }
+        this.cur = prt;
+        this.prt = prt.prt;
+        return false;
+      }
     }
   }
 
-  prepare_insert(x) {
-    // before insert(), check if key = x does not exist in the tree
-    this.update_nodes = new Set();
-    const new_node = new Node(x);
-    this.left = this.right = new_node;
-    let prv = null;
-    this.pv = x;
-    if(this.root == null) {
-      this.root = new_node;
-      this.cur = null;
-      return new_node;
+  remove_retracing_step() {
+    const node = this.cur, prt = this.prt;
+    if(prt === null) {
+      return this.finish_retracing();
     }
-    let node = this.root;
-    while(node !== null) {
-      if(node.size <= randint(node.size + 1)) {
-        break;
-      }
-      prv = node;
-      this.update_nodes.add(node);
-      if(x < node.val) {
-        node = node.left;
+    prt.update_height();
+    if(prt.is_left(node)) {
+      if(prt.factor() == 2) {
+        const sib = prt.right;
+        this.update_nodes.add(sib);
+        if(sib.factor() < 0) {
+          this.update_nodes.add(sib.left);
+          sib.rotate_right();
+          this.cur = prt.rotate_left();
+          this.prt = this.cur.prt;
+        } else {
+          this.cur = prt.rotate_left();
+          this.prt = this.cur.prt;
+        }
+        if(this.prt === null) {
+          this.root = this.cur;
+        }
+        return true;
       } else {
-        node = node.right;
-      }
-    }
-
-    if(prv !== null) {
-      if(x < prv.val) {
-        prv.set_left(new_node);
-      } else {
-        prv.set_right(new_node);
+        if(prt.factor() == 1) {
+          return this.finish_retracing();
+        }
+        this.cur = prt;
+        this.prt = prt.prt;
+        if(this.prt === null) {
+          this.root = this.cur;
+        }
+        return false;
       }
     } else {
-      this.root = new_node;
+      if(prt.factor() == -2) {
+        const sib = prt.left;
+        this.update_nodes.add(sib);
+        if(sib.factor() > 0) {
+          this.update_nodes.add(sib.right);
+          sib.rotate_left();
+          this.cur = prt.rotate_right();
+          this.prt = this.cur.prt;
+        } else {
+          this.cur = prt.rotate_right();
+          this.prt = this.cur.prt;
+        }
+        if(this.prt === null) {
+          this.root = this.cur;
+        }
+        return true;
+      } else {
+        if(prt.factor() == -1) {
+          return this.finish_retracing();
+        }
+        this.cur = prt;
+        this.prt = prt.prt;
+        if(this.prt === null) {
+          this.root = this.cur;
+        }
+        return false;
+      }
     }
-
-    this.cur = node;
-    return new_node;
   }
 
   get_update_nodes() {
     return this.update_nodes;
   }
+
+  retracing(v) {
+    while(this.is_retracing()) this.insert_retracing_step();
+  }
 }
 
-const rbst = new RandomizedBinarySearchTree();
+const avl_tree = new AVLTree();
 
 const node_view = {};
 const node_map = {};
@@ -364,7 +450,7 @@ window.onload = () => {
   };
 
   const remove_tree_node = (v) => {
-    const tree = rbst;
+    const tree = avl_tree;
     const node_num = Object.keys(node_view).length;
 
     if(tl !== null) {
@@ -374,25 +460,23 @@ window.onload = () => {
       duration: 1000,
     });
 
-    tl.add({
-      duration: 500,
-    });
-
     let max_depth = 0;
     {
       const result_m = traverse(tree.root);
       max_depth = result_m[1];
     }
 
-    const update_nodes = new Set();
+    tl.add({
+      duration: 1000,
+    });
 
     let v_n_id = null;
     let targetNode = null;
-    if(tree.find(v)) {
-      const node = tree.prepare_delete(v);
 
+    const r = tree.remove(v);
+    if(r !== null) {
+      v_n_id = r.id;
       targetNode = node_view[v].node;
-      v_n_id = node.id;
 
       tl.add({
         targets: [`path.edge${v_n_id}`],
@@ -406,67 +490,34 @@ window.onload = () => {
         easing: 'linear',
       });
 
-      let updated = true;
-      while(tree.delete_step()) {
-        const result = {};
-        const result_l = traverse(tree.left);
-        const result_m = traverse(tree.root);
-        const result_r = traverse(tree.right);
-
-        max_depth = Math.max(max_depth, result_m[1]);
-
-        const tmp = [];
-        for(let n_id in result_m[0]) {
-          const v = result_m[0][n_id];
-          const node = node_map[n_id];
-          tmp.push([node, v[1]]);
-        }
-        const c_base = (tree.cur !== null ? result_m[0][tree.cur.id][1] : 0);
-        max_depth = Math.max(max_depth, result_l[1] + c_base + 2, result_r[1] + c_base + 2);
-        for(let n_id in result_l[0]) {
-          const v = result_l[0][n_id];
-          const node = node_map[n_id];
-          tmp.push([node, v[1] + c_base + 2]);
-        }
-        for(let n_id in result_r[0]) {
-          const v = result_r[0][n_id];
-          const node = node_map[n_id];
-          tmp.push([node, v[1] + c_base + 2]);
-        }
-        tmp.push([node, 0]);
-        tmp.sort((x, y) => x[0].val - y[0].val);
-        let cursor = 0;
-        for(let e of tmp) {
-          const node = e[0], pos = e[1];
-          result[node.id] = [cursor++, pos];
-        }
-        translate_obj(result, tl);
-      }
-
-      tree.finish_delete();
-
       {
         const result_m = traverse(tree.root);
         const result = result_m[0];
         result[v_n_id] = [0, 0];
-        max_depth = Math.max(max_depth, result_m[1]);
-
-        translate_obj(result_m[0], tl);
+        translate_obj(result, tl);
       }
 
-      for(let e of tree.get_update_nodes()) {
-        update_nodes.add(e);
+      while(tree.is_retracing()) {
+        if(!tree.remove_retracing_step()) {
+          continue;
+        }
+        const result_m = traverse(tree.root);
+        const result = result_m[0];
+        result[v_n_id] = [0, 0];
+        translate_obj(result, tl);
+        max_depth = Math.max(max_depth, result_m[1]);
       }
 
       delete node_view[v];
       delete node_map[v_n_id];
     }
 
+    const update_nodes = tree.get_update_nodes();
+
     if(targetNode !== null) {
       targetNode.find("circle").removeClass("normal-node").addClass("target-node");
     }
     for(let node of update_nodes) {
-      if(v === node.val) continue;
       const updateNode = node_view[node.val].node;
       updateNode.find("circle").removeClass("normal-node").addClass("update-node");
     }
@@ -475,7 +526,6 @@ window.onload = () => {
         targetNode.find("circle").removeClass("target-node").addClass("normal-node");
       }
       for(let node of update_nodes) {
-        if(v === node.val) continue;
         const updateNode = node_view[node.val].node;
         updateNode.find("circle").removeClass("update-node").addClass("normal-node");
       }
@@ -488,13 +538,13 @@ window.onload = () => {
     };
 
     change_canvas_size(
-      (node_num+2) * NODE_W + BASE_X*2,
+      (node_num+5) * NODE_W + BASE_X*2,
       (max_depth+1) * NODE_H + BASE_Y*2
     );
   };
 
   const add_tree_node = (v) => {
-    const tree = rbst;
+    const tree = avl_tree;
 
     if(tl !== null) {
       tl.seek(tl.duration);
@@ -503,59 +553,29 @@ window.onload = () => {
       duration: 1000,
     });
 
-    tl.add({
-      duration: 500,
-    });
-
     let max_depth = 0;
-    {
-      const result_m = traverse(tree.root);
-      max_depth = result_m[1];
+
+    const r = tree.insert(v);
+    if(r !== null) {
+      // add a new node
+      const n_id = r.id;
+      add_node(v, n_id);
+      node_map[n_id] = r;
     }
 
-    if(!tree.find(v)) {
-      const node = tree.prepare_insert(v);
-      const v_n_id = node.id;
-      if(node !== null) {
-        add_node(v, node.id);
-        node_map[node.id] = node;
+    {
+      const result_m = traverse(tree.root);
+      translate_obj(result_m[0], tl);
+      max_depth = Math.max(max_depth, result_m[1]);
+    }
+
+    while(tree.is_retracing()) {
+      if(!tree.insert_retracing_step()) {
+        continue;
       }
-      let updated = true;
-      while(true) {
-        const result = {};
-        const result_m = traverse(tree.root);
-        const result_c = traverse(tree.cur);
-
-        max_depth = Math.max(max_depth, result_m[1]);
-        const tmp = [];
-
-        for(let n_id in result_m[0]) {
-          const v = result_m[0][n_id];
-          const node = node_map[n_id];
-          tmp.push([node, v[1]]);
-        }
-        const c_base = Math.max(result_m[0][tree.left.id][1], result_m[0][tree.right.id][1]);
-        max_depth = Math.max(max_depth, result_c[1] + c_base + 2);
-        for(let n_id in result_c[0]) {
-          const v = result_c[0][n_id];
-          const node = node_map[n_id];
-          tmp.push([node, v[1] + c_base + 2]);
-        }
-        tmp.sort((x, y) => x[0].val - y[0].val);
-        let cursor = 0;
-        for(let e of tmp) {
-          const node = e[0], pos = e[1];
-          result[node.id] = [cursor++, pos];
-        }
-        translate_obj(result, tl);
-
-        if(!updated) {
-          break;
-        }
-        updated = tree.insert_step();
-      }
-
-      tree.finish_insert();
+      const result_m = traverse(tree.root);
+      translate_obj(result_m[0], tl);
+      max_depth = Math.max(max_depth, result_m[1]);
     }
 
     const targetNode = node_view[v].node;
@@ -575,7 +595,7 @@ window.onload = () => {
     };
     const node_num = Object.keys(node_view).length;
     change_canvas_size(
-      (node_num+2) * NODE_W + BASE_X*2,
+      (node_num+5) * NODE_W + BASE_X*2,
       (max_depth+1) * NODE_H + BASE_Y*2
     );
   };
