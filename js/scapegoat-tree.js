@@ -344,7 +344,7 @@ class ScapegoatTree {
   }
 
   get_update_nodes() {
-    return this.update_nodes;
+    return Array.from(this.update_nodes.values());
   }
 
   get_disable_nodes() {
@@ -352,46 +352,34 @@ class ScapegoatTree {
   }
 }
 
-const scapegoat_tree = new ScapegoatTree();
-
-const node_view = {};
-const node_map = {};
-let tl = null;
-const NODE_W = 20, NODE_H = 40;
-const BASE_X = 35, BASE_Y = 15;
-
-function translate_obj(result, tl) {
+function translate_obj(node_map, result, tl) {
   tl.add({
     targets: ['g.node'],
     translateX: (el) => {
-      const n_id = $(el).attr("nid");
-      return result[n_id][0] * NODE_W + BASE_X;
+      const n_id = el.getAttribute("nid");
+      return get_node_px(result[n_id]);
     },
     translateY: (el) => {
-      const n_id = $(el).attr("nid");
-      return result[n_id][1] * NODE_H + BASE_Y;
+      const n_id = el.getAttribute("nid");
+      return get_node_py(result[n_id]);
     },
     duration: 1000,
     easing: 'linear',
   }).add({
     targets: ['path.edge'],
     d: [{value: (el) => {
-      const n_id = $(el).attr("nid");
-      const node = node_map[n_id], f = result[n_id];
-      const fx = f[0] * NODE_W + 10 + BASE_X, fy = f[1] * NODE_H + 10 + BASE_Y;
+      const n_id = el.getAttribute("nid");
+      const node = node_map[n_id];
+      const [fx, fy] = get_edge_pos(result[n_id]);
 
       const l_child = node.left, r_child = node.right;
       let l_tx = fx, l_ty = fy;
       if(l_child !== null) {
-        const t = result[l_child.id];
-        l_tx = t[0] * NODE_W + 10 + BASE_X;
-        l_ty = t[1] * NODE_H + 10 + BASE_Y;
+        [l_tx, l_ty] = get_edge_pos(result[l_child.id]);
       }
       let r_tx = fx, r_ty = fy;
       if(r_child !== null) {
-        const t = result[r_child.id];
-        r_tx = t[0] * NODE_W + 10 + BASE_X;
-        r_ty = t[1] * NODE_H + 10 + BASE_Y;
+        [r_tx, r_ty] = get_edge_pos(result[r_child.id]);
       }
       return `M${l_tx},${l_ty}L${fx},${fy}L${r_tx},${r_ty}`;
     }}],
@@ -402,31 +390,83 @@ function translate_obj(result, tl) {
 }
 
 window.onload = () => {
-  const canvas = $("svg.canvas");
-  const nodes = canvas.find(".nodes");
-  const edges = canvas.find(".edges");
+  const tree = new ScapegoatTree();
 
-  const add_node = (v, n_id) => {
-    nodes.append(createNode(v, n_id));
-    edges.append(createEdge(v, n_id));
-    const node = $(`g.node${n_id}`);
-    const edge = $(`path.edge${n_id}`);
+  const node_view = {};
+  const node_map = {};
+  let tl = null;
+
+  const canvas = document.querySelector("svg.canvas");
+  const nodes = document.querySelector(".nodes");
+  const edges = document.querySelector(".edges");
+
+  const add_node = (v, node) => {
+    const n_id = node.id;
+    nodes.appendChild(createNode(v, n_id));
+    edges.appendChild(createEdge(v, n_id));
+    const d_node = document.querySelector(`g.node${n_id}`);
+    const d_edge = document.querySelector(`path.edge${n_id}`);
 
     node_view[v] = {
-      "node": node,
-      "edge": edge,
+      "node": d_node,
+      "edge": d_edge,
+      "hidden": false,
     };
+    node_map[n_id] = node;
   };
 
   const change_canvas_size = (width, height) => {
-    canvas.css({
-      "width": `${width}px`,
-      "height": `${height}px`,
-    });
+    const style = canvas.style;
+    style["width"] = `${width}px`;
+    style["height"] = `${height}px`;
+  };
+
+  const set_node_status = (target_node, update_nodes, disable_nodes, is_delete) => {
+    if(target_node !== null) {
+      const clist = target_node.querySelector("circle").classList;
+      clist.remove("normal-node");
+      clist.remove("deleted-node");
+      clist.add("target-node");
+    }
+    for(let node of update_nodes) {
+      if(disable_nodes.has(node) || node === target_node) {
+        continue;
+      }
+      const update_node = node_view[node.val].node;
+      const clist = update_node.querySelector("circle").classList;
+      clist.remove("normal-node");
+      clist.add("update-node");
+    }
+    tl.complete = () => {
+      if(target_node !== null) {
+        const clist = target_node.querySelector("circle").classList;
+        clist.remove("target-node");
+        if(is_delete) {
+          clist.add("deleted-node");
+        } else {
+          clist.add("normal-node");
+        }
+      }
+      for(let node of update_nodes) {
+        if(disable_nodes.has(node) || node === target_node) {
+          continue;
+        }
+        const update_node = node_view[node.val].node;
+        const clist = update_node.querySelector("circle").classList;
+        clist.remove("update-node");
+        clist.add("normal-node");
+      }
+
+      for(let node of disable_nodes) {
+        removeNode(node.id);
+        removeEdge(node.id);
+      }
+    };
   };
 
   const remove_tree_node = (v) => {
-    const tree = scapegoat_tree;
+    disable_alpha();
+
     const node_num = tree.get_size();
 
     if(tl !== null) {
@@ -439,12 +479,11 @@ window.onload = () => {
     let max_depth = translate_tree(tree);
 
     let disable_nodes = new Set();
-    let targetNode = null;
+    let target_node = null;
 
-    const r = tree.remove(v);
-    if(r !== null) {
-      targetNode = node_view[v].node;
-      const v_n_id = r.id;
+    const node = tree.remove(v);
+    if(node !== null) {
+      target_node = node_view[v].node;
       if(tree.prepare_rebuild()) {
         max_depth = Math.max(max_depth, translate_tree(tree, true));
         tl.add({ duration: 200 });
@@ -461,33 +500,7 @@ window.onload = () => {
     }
 
     const update_nodes = tree.get_update_nodes();
-    if(targetNode !== null) {
-      targetNode.find("circle").removeClass("normal-node deleted-node").addClass("target-node");
-    }
-    for(let node of update_nodes) {
-      if(disable_nodes.has(node) || v === node.val) {
-        continue;
-      }
-      const updateNode = node_view[node.val].node;
-      updateNode.find("circle").removeClass("normal-node").addClass("update-node");
-    }
-    tl.complete = () => {
-      if(targetNode !== null) {
-        targetNode.find("circle").removeClass("target-node").addClass("deleted-node");
-      }
-      for(let node of update_nodes) {
-        if(disable_nodes.has(node) || v === node.val) {
-          continue;
-        }
-        const updateNode = node_view[node.val].node;
-        updateNode.find("circle").removeClass("update-node").addClass("normal-node");
-      }
-
-      for(let node of disable_nodes) {
-        removeNode(node.id);
-        removeEdge(node.id);
-      }
-    };
+    set_node_status(target_node, update_nodes, disable_nodes, true);
 
     change_canvas_size(
       (node_num+1) * NODE_W + BASE_X*2,
@@ -499,12 +512,12 @@ window.onload = () => {
     const result_m = traverse(tree.root);
     const result = {};
     const tmp = [];
-    const r_base = result_m[1];
-    let max_depth = result_m[1];
-    for(let n_id in result_m[0]) {
-      const v = result_m[0][n_id];
+    const r_base = result_m.depth;
+    let max_depth = result_m.depth;
+    for(let n_id in result_m.ps) {
+      const v = result_m.ps[n_id];
       const node = node_map[n_id];
-      tmp.push([node, v[1], 0]);
+      tmp.push([node, v[1], 0])
     }
     if(rebuilding) {
       const result_r = tree.rebuild_nodes;
@@ -527,29 +540,35 @@ window.onload = () => {
     const disable_nodes = tree.get_disable_nodes();
     if(disable_nodes.size > 0) {
       const c_nodes = [], c_edges = [];
+      let need_hide = false;
       for(let node of disable_nodes) {
         result[node.id] = [0, 0];
+        if(!node_view[node.val] || node_view[node.val].hidden) continue;
         c_nodes.push(`.node${node.id}`);
         c_edges.push(`.edge${node.id}`);
+        node_view[node.val].hidden = true;
       }
-      tl.add({
-        targets: c_edges,
-        opacity: 0,
-        duration: 500,
-        easing: 'linear',
-      }).add({
-        targets: c_nodes,
-        opacity: 0,
-        duration: 500,
-        easing: 'linear',
-      });
+      if(c_nodes.length > 0) {
+        tl.add({
+          targets: c_edges,
+          opacity: 0,
+          duration: 500,
+          easing: 'linear',
+        }).add({
+          targets: c_nodes,
+          opacity: 0,
+          duration: 500,
+          easing: 'linear',
+        });
+      }
     }
-    translate_obj(result, tl);
+    translate_obj(node_map, result, tl);
     return max_depth;
   };
 
   const add_tree_node = (v) => {
-    const tree = scapegoat_tree;
+    disable_alpha();
+
     if(tl !== null) {
       tl.seek(tl.duration);
     }
@@ -559,11 +578,9 @@ window.onload = () => {
 
     let max_depth = translate_tree(tree);
 
-    const r = tree.insert(v);
-    if(r !== null) {
-      const n_id = r.id;
-      add_node(v, n_id);
-      node_map[n_id] = r;
+    const node = tree.insert(v);
+    if(node !== null) {
+      add_node(v, node);
     }
 
     max_depth = Math.max(max_depth, translate_tree(tree));
@@ -582,32 +599,9 @@ window.onload = () => {
       }
     }
 
-    const targetNode = node_view[v].node;
-
+    const target_node = node_view[v].node;
     const update_nodes = tree.get_update_nodes();
-    targetNode.find("circle").removeClass("normal-node deleted-node").addClass("target-node");
-    for(let node of update_nodes) {
-      if(disable_nodes.has(node) || v === node.val) {
-        continue;
-      }
-      const updateNode = node_view[node.val].node;
-      updateNode.find("circle").removeClass("normal-node").addClass("update-node");
-    }
-    tl.complete = () => {
-      targetNode.find("circle").removeClass("target-node").addClass("normal-node");
-      for(let node of update_nodes) {
-        if(disable_nodes.has(node) || v === node.val) {
-          continue;
-        }
-        const updateNode = node_view[node.val].node;
-        updateNode.find("circle").removeClass("update-node").addClass("normal-node");
-      }
-
-      for(let node of disable_nodes) {
-        removeNode(node.id);
-        removeEdge(node.id);
-      }
-    };
+    set_node_status(target_node, update_nodes, disable_nodes, false);
 
     const node_num = Object.keys(node_view).length;
     change_canvas_size(
@@ -621,47 +615,17 @@ window.onload = () => {
 
   const disable_alpha = () => {
     if(!first) return;
-    const val = $(".alpha-value").val();
+    const val = document.querySelector(".alpha-value").value;
     const v = parseFloat(val);
     if(!isNaN(v) && 0.5 <= v && v <= 1) {
-      scapegoat_tree.set_alpha(v);
+      tree.set_alpha(v);
     }
     first = false;
-    $(".alpha-value").prop("disabled", true);
+    document.querySelector(".alpha-value").disabled = true;
   };
 
-  $(".add-random").click((el) => {
-    disable_alpha();
-    const v = Math.floor(Math.random()*1000);
-    values[v] = 1;
-    add_tree_node(v);
-  });
-
-  $(".remove-random").click((el) => {
-    const vs = Object.keys(values);
-    if(vs.length > 0) {
-      const v = parseInt(vs[Math.floor(Math.random() * vs.length)]);
-      delete values[v];
-      remove_tree_node(v);
-    }
-  });
-
-  $(".add").click((el) => {
-    disable_alpha();
-    const val = $(".node-key").val();
-    const v = parseInt(val, 10);
-    if(!isNaN(v) && 0 <= v && v <= 999) {
-      values[v] = 1;
-      add_tree_node(v);
-    }
-  });
-
-  $(".remove").click((el) => {
-    const val = $(".node-key").val();
-    const v = parseInt(val, 10);
-    if(!isNaN(v) && 0 <= v && v <= 999) {
-      delete values[v];
-      remove_tree_node(v);
-    }
-  });
+  set_add_random(add_tree_node);
+  set_remove_random(remove_tree_node, node_view);
+  set_add_value(add_tree_node);
+  set_remove_value(remove_tree_node);
 };
