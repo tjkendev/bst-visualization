@@ -1,36 +1,33 @@
 "use strict";
 
+function is_black(node) {
+  return (node === null) || (node.color === 0);
+}
+
+function is_red(node) {
+  return !is_black(node);
+}
+
 let node_id_gen = 0;
 class Node {
   constructor(val) {
     this.left = this.right = null;
     this.prt = null;
     this.val = val;
-    this.height = 1;
     this.id = ++node_id_gen;
+    // 0 = black, 1 = red
+    this.color = 1;
   }
 
-  factor() {
-    const lv = (this.left !== null ? this.left.height : 0);
-    const rv = (this.right !== null ? this.right.height : 0);
-    return rv - lv;
-  }
-
-  update_height() {
-    this.height = Math.max(
-      (this.left !== null ? this.left.height : 0),
-      (this.right !== null ? this.right.height : 0)
-    ) + 1;
-  }
-
-  remove_child(node) {
-    if(this.left === node) {
-      this.remove_left();
+  remove_child(child) {
+    if(child !== null) {
+      if(this.left === child) {
+        this.left = child.prt = null;
+      }
+      if(this.right === child) {
+        this.right = child.prt = null;
+      }
     }
-    if(this.right === node) {
-      this.remove_right();
-    }
-    this.update_height();
   }
 
   remove_left() {
@@ -38,7 +35,6 @@ class Node {
     if(left !== null) {
       this.left = left.prt = null;
     }
-    this.update_height();
     return left;
   }
   remove_right() {
@@ -46,13 +42,12 @@ class Node {
     if(right !== null) {
       this.right = right.prt = null;
     }
-    this.update_height();
     return right;
   }
 
   set_left(node) {
     if(this.left !== null) {
-      this.remove_left();
+      this.remove_child(this.left);
     }
     this.left = node;
 
@@ -62,12 +57,11 @@ class Node {
       }
       node.prt = this;
     }
-    this.update_height();
   }
 
   set_right(node) {
     if(this.right !== null) {
-      this.remove_right();
+      this.remove_child(this.right);
     }
     this.right = node;
 
@@ -77,7 +71,6 @@ class Node {
       }
       node.prt = this;
     }
-    this.update_height();
   }
 
   rotate_left() {
@@ -87,9 +80,7 @@ class Node {
       return null;
     }
     this.set_right(r.left);
-    this.update_height();
     r.set_left(this);
-    r.update_height();
 
     if(p !== null) {
       if(is_left) {
@@ -108,9 +99,7 @@ class Node {
       return null;
     }
     this.set_left(l.right);
-    this.update_height();
     l.set_right(this);
-    l.update_height();
 
     if(p !== null) {
       if(is_left) {
@@ -129,26 +118,33 @@ class Node {
   is_right(node) {
     return this.right === node;
   }
+
+  get_sib(node) {
+    return (this.is_left(node) ? this.right : this.left);
+  }
 }
 
-class AVLTree {
+class BottomUpRedBlackTree {
   constructor() {
+    this.clear();
+    this.update_nodes = [];
+  }
+
+  clear() {
     this.root = null;
     this.cur = null;
-    this.prt = null;
-    this.update_nodes = new Set();
+    this.dnode_color = null;
   }
 
   insert(x) {
     this.update_nodes = new Set();
     if(this.root === null) {
-      return this.root = new Node(x);
+      this.cur = this.root = new Node(x);
+      return this.root;
     }
+
     let node = this.root;
-    while(node !== null) {
-      if(node.val === x) {
-        return null;
-      }
+    while(node.val !== x) {
       this.update_nodes.add(node);
       if(x < node.val) {
         if(node.left === null) break;
@@ -158,20 +154,25 @@ class AVLTree {
         node = node.right;
       }
     }
+
+    if(x === node.val) {
+      return this.cur = null;
+    }
+
     const new_node = new Node(x);
-    this.cur = new_node;
-    this.prt = node;
     if(x < node.val) {
       node.set_left(new_node);
     } else {
       node.set_right(new_node);
     }
+    this.cur = new_node;
     return new_node;
   }
 
   remove(x) {
     this.update_nodes = new Set();
     this.cur = this.prt = null;
+    this.dnode = null;
     let node = this.root;
     while(node !== null) {
       if(node.val === x) break;
@@ -200,7 +201,9 @@ class AVLTree {
       } else {
         node.remove_child(n_node);
         this.root = n_node;
+        this.cur = n_node;
       }
+      this.dnode_color = node.color;
     } else if(node.left !== null && node.right !== null) {
       let c_node = node.right;
       while(c_node.left !== null) {
@@ -232,151 +235,166 @@ class AVLTree {
         this.prt = c_prt;
         this.cur = c_prt.left;
       }
+      this.dnode_color = c_node.color;
+      c_node.color = node.color;
     }
     return node;
   }
 
-  is_retracing() {
-    return (this.prt !== null);
-  }
-
-  finish_retracing() {
-    this.cur = this.prt = null;
-  }
-
-  insert_retracing_step() {
-    const node = this.cur, prt = this.prt;
-    if(prt === null) {
-      return this.finish_retracing();
+  *insert_rebalancing() {
+    if(this.cur === null) {
+      return;
     }
-    // assert (node !== null);
-    prt.update_height();
-    if(prt.is_left(node)) {
-      if(prt.factor() == -2) {
-        if(node.factor() > 0) {
-          node.rotate_left();
-          this.prt = prt.rotate_right();
-          if(this.prt.prt === null) {
-            this.root = node.prt;
-          }
-        } else {
-          prt.rotate_right();
-          this.prt = node.prt;
-          if(node.prt === null) {
-            this.root = node;
-          }
+    let node = this.cur;
+    while(true) {
+      let prt = node.prt;
+      if(prt === null) {
+        if(node.color === 1) {
+          node.color = 0;
+          yield;
         }
-        return true;
-      } else {
-        if(prt.factor() >= 0) {
-          return this.finish_retracing();
-        }
-        this.cur = prt;
-        this.prt = prt.prt;
-        return false;
+        break;
       }
-    } else {
-      if(prt.factor() == 2) {
-        if(node.factor() < 0) {
-          node.rotate_right();
-          this.prt = prt.rotate_left();
-          if(this.prt.prt === null) {
-            this.root = node.prt;
-          }
-        } else {
-          prt.rotate_left();
-          this.prt = node.prt;
-          if(node.prt === null) {
-            this.root = node;
-          }
-        }
-        return true;
-      } else {
-        if(prt.factor() <= 0) {
-          return this.finish_retracing();
-        }
-        this.cur = prt;
-        this.prt = prt.prt;
-        return false;
+      if(prt.color === 0) {
+        // do nothing
+        break;
       }
+      const gprt = prt.prt;
+      // assert (prt.color === 1 && gprt !== null)
+      const u = gprt.get_sib(prt);
+      if(u === null || u.color === 0) {
+        if(gprt.is_left(prt) && prt.is_right(node)) {
+          prt = prt.rotate_left();
+          node = prt.left;
+          yield;
+        } else if(gprt.is_right(prt) && prt.is_left(node)) {
+          prt = prt.rotate_right();
+          node = prt.right;
+          yield;
+        }
+
+        if(prt.is_left(node)) {
+          const r = gprt.rotate_right();
+          if(r.prt === null) this.root = r;
+        } else {
+          const r = gprt.rotate_left();
+          if(r.prt === null) this.root = r;
+        }
+        yield;
+
+        prt.color = 0;
+        gprt.color = 1;
+        yield;
+
+        break;
+      }
+
+      prt.color = 0;
+      gprt.color = 1;
+      u.color = 0;
+
+      yield;
+      node = gprt;
     }
   }
 
-  remove_retracing_step() {
-    const node = this.cur, prt = this.prt;
-    if(prt === null) {
-      return this.finish_retracing();
+  *remove_rebalancing() {
+    if(this.dnode_color === 1) {
+      return;
     }
-    prt.update_height();
-    if(prt.is_left(node)) {
-      if(prt.factor() == 2) {
-        const sib = prt.right;
+    if(is_red(this.cur)) {
+      this.cur.color = 0;
+      this.update_nodes.add(this.cur);
+      yield;
+      return;
+    }
+
+    let node = this.cur, prt = this.prt;
+    while(true) {
+      if(prt === null) {
+        break;
+      }
+      let sib = prt.get_sib(node);
+      this.update_nodes.add(sib);
+      // assert (sib !== null)
+      if(is_red(sib)) {
+        const r = (prt.is_left(node) ? prt.rotate_left() : prt.rotate_right());
+        if(r.prt === null) this.root = r;
+        yield;
+
+        prt.color = 1;
+        sib.color = 0;
+
+        sib = prt.get_sib(node);
         this.update_nodes.add(sib);
-        if(sib.factor() < 0) {
-          this.update_nodes.add(sib.left);
-          sib.rotate_right();
-          this.cur = prt.rotate_left();
-          this.prt = this.cur.prt;
-        } else {
-          this.cur = prt.rotate_left();
-          this.prt = this.cur.prt;
-        }
-        if(this.prt === null) {
-          this.root = this.cur;
-        }
-        return true;
-      } else {
-        if(prt.factor() == 1) {
-          return this.finish_retracing();
-        }
-        this.cur = prt;
-        this.prt = prt.prt;
-        if(this.prt === null) {
-          this.root = this.cur;
-        }
-        return false;
+        yield;
       }
-    } else {
-      if(prt.factor() == -2) {
-        const sib = prt.left;
-        this.update_nodes.add(sib);
-        if(sib.factor() > 0) {
+
+      if([prt, sib, sib.left, sib.right].some(is_red)) {
+        if(is_red(prt) && [sib, sib.left, sib.right].every(is_black)) {
+          sib.color = 1;
+          prt.color = 0;
+          yield;
+          break;
+        }
+
+        if(is_black(sib)) {
+          if(prt.is_left(node) && is_black(sib.right) && is_red(sib.left)) {
+            const r = sib.rotate_right();
+            yield;
+
+            r.color = 1;
+            r.right.color = 0;
+            this.update_nodes.add(r.right);
+          } else if(prt.is_right(node) && is_black(sib.left) && is_red(sib.right)) {
+            const r = sib.rotate_left();
+            yield;
+
+            r.color = 1;
+            r.left.color = 0;
+            this.update_nodes.add(r.left);
+          }
+          sib = prt.get_sib(node);
+          this.update_nodes.add(sib);
+          yield;
+        }
+
+        if(prt.is_left(node)) {
+          const r = prt.rotate_left();
+          if(r.prt === null) this.root = r;
+          yield;
+
+          sib.color = prt.color;
+          prt.color = sib.right.color = 0;
           this.update_nodes.add(sib.right);
-          sib.rotate_left();
-          this.cur = prt.rotate_right();
-          this.prt = this.cur.prt;
+          yield;
         } else {
-          this.cur = prt.rotate_right();
-          this.prt = this.cur.prt;
+          const r = prt.rotate_right();
+          if(r.prt === null) this.root = r;
+          yield;
+
+          sib.color = prt.color;
+          prt.color = sib.left.color = 0;
+          this.update_nodes.add(sib.left);
+          yield;
         }
-        if(this.prt === null) {
-          this.root = this.cur;
-        }
-        return true;
-      } else {
-        if(prt.factor() == -1) {
-          return this.finish_retracing();
-        }
-        this.cur = prt;
-        this.prt = prt.prt;
-        if(this.prt === null) {
-          this.root = this.cur;
-        }
-        return false;
+        break;
       }
+
+      sib.color = 1;
+      yield;
+
+      node = prt;
+      prt = prt && prt.prt;
     }
   }
 
   get_update_nodes() {
     return this.update_nodes;
   }
-
-  retracing(v) {
-    while(this.is_retracing()) this.insert_retracing_step();
-  }
 }
 
-const avl_tree = new AVLTree();
+const redblack_tree = new BottomUpRedBlackTree();
 
 const node_view = {};
 const node_map = {};
@@ -397,6 +415,15 @@ function translate_obj(result, tl) {
     },
     duration: 1000,
     easing: 'linear',
+  }).add({
+    targets: ['circle.node-circle'],
+    stroke: [{value: (el) => {
+      const n_id = $(el).parent().attr("nid");
+      const node = node_map[n_id];
+      return (node.color === 1 ? "#ff0000" : "#000000");
+    }}],
+    offset: '-=1000',
+    duration: 1000,
   }).add({
     targets: ['path.edge'],
     d: [{value: (el) => {
@@ -450,7 +477,7 @@ window.onload = () => {
   };
 
   const remove_tree_node = (v) => {
-    const tree = avl_tree;
+    const tree = redblack_tree;
     const node_num = Object.keys(node_view).length;
 
     if(tl !== null) {
@@ -464,16 +491,12 @@ window.onload = () => {
     {
       const result_m = traverse(tree.root);
       max_depth = result_m[1];
+      translate_obj(result_m[0], tl);
     }
 
-    tl.add({
-      duration: 1000,
-    });
-
+    const r = redblack_tree.remove(v);
     let v_n_id = null;
     let targetNode = null;
-
-    const r = tree.remove(v);
     if(r !== null) {
       v_n_id = r.id;
       targetNode = node_view[v].node;
@@ -490,28 +513,22 @@ window.onload = () => {
         easing: 'linear',
       });
 
-      {
+      let updated = true;
+      const step = tree.remove_rebalancing();
+      while(true) {
         const result_m = traverse(tree.root);
         const result = result_m[0];
         result[v_n_id] = [0, 0];
-        translate_obj(result, tl);
-      }
-
-      while(tree.is_retracing()) {
-        if(!tree.remove_retracing_step()) {
-          continue;
-        }
-        const result_m = traverse(tree.root);
-        const result = result_m[0];
-        result[v_n_id] = [0, 0];
-        translate_obj(result, tl);
         max_depth = Math.max(max_depth, result_m[1]);
+        translate_obj(result, tl);
+
+        if(!updated) break;
+        updated = !step.next().done;
       }
 
       delete node_view[v];
       delete node_map[v_n_id];
     }
-
     const update_nodes = tree.get_update_nodes();
 
     if(targetNode !== null) {
@@ -538,14 +555,13 @@ window.onload = () => {
     };
 
     change_canvas_size(
-      (node_num+1) * NODE_W + BASE_X*2,
+      (node_num+5) * NODE_W + BASE_X*2,
       (max_depth+1) * NODE_H + BASE_Y*2
     );
   };
 
   const add_tree_node = (v) => {
-    const tree = avl_tree;
-
+    const tree = redblack_tree;
     if(tl !== null) {
       tl.seek(tl.duration);
     }
@@ -553,33 +569,33 @@ window.onload = () => {
       duration: 1000,
     });
 
+
     tl.add({
       duration: 1000,
     });
 
-    let max_depth = 0;
-
     const r = tree.insert(v);
     if(r !== null) {
-      // add a new node
       const n_id = r.id;
       add_node(v, n_id);
       node_map[n_id] = r;
     }
 
+    let max_depth = 0;
     {
       const result_m = traverse(tree.root);
+      max_depth = result_m[1];
       translate_obj(result_m[0], tl);
-      max_depth = Math.max(max_depth, result_m[1]);
     }
 
-    while(tree.is_retracing()) {
-      if(!tree.insert_retracing_step()) {
-        continue;
-      }
+    const step = tree.insert_rebalancing();
+
+    while(!step.next().done) {
       const result_m = traverse(tree.root);
-      translate_obj(result_m[0], tl);
+
       max_depth = Math.max(max_depth, result_m[1]);
+
+      translate_obj(result_m[0], tl);
     }
 
     const targetNode = node_view[v].node;
@@ -597,6 +613,7 @@ window.onload = () => {
         updateNode.find("circle").removeClass("update-node").addClass("normal-node");
       }
     };
+
     const node_num = Object.keys(node_view).length;
     change_canvas_size(
       (node_num+1) * NODE_W + BASE_X*2,
@@ -616,6 +633,42 @@ window.onload = () => {
       remove_tree_node(v);
     }
   });
+
+  const property_check = () => {
+    let base_depth = -1;
+    const leaves = [];
+
+    const dfs = (node, prt, bdep) => {
+      if(node === null) {
+        if(prt) leaves.push([prt, bdep+1]);
+        return;
+      }
+      if(node.color === 0) {
+        ++bdep;
+      }
+      dfs(node.left, node, bdep);
+      if(is_red(node) && is_red(prt)) {
+        console.log("F: red and red", node, prt);
+      }
+      dfs(node.right, node, bdep);
+    };
+    const tree = redblack_tree;
+    if(tree.root !== null && tree.root.color === 1) {
+      console.log("F: root is red", tree.root);
+    }
+    dfs(tree.root, null, 0);
+    let max_depth = 0;
+    leaves.forEach
+    for(let [node, bdep] of leaves) {
+      max_depth = Math.max(max_depth, bdep);
+    }
+    if(leaves.some((e) => e[1] !== max_depth)) {
+      for(let [node, bdep] of leaves) {
+        console.log("F: black depth", node, bdep, max_depth);
+      }
+    }
+    console.log("checked");
+  };
 
   $(".add").click((el) => {
     const val = $(".node-key").val();

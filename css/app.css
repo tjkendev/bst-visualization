@@ -1,9 +1,9 @@
 .target-node {
-  fill: red;
+  fill: #ff896b;
 }
 
 .update-node {
-  fill: yellow;
+  fill: #ffee00;
 }
 
 .normal-node {

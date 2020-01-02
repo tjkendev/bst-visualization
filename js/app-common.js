@@ -12,7 +12,7 @@ function createNode(val, id) {
   new_g.setAttribute("opacity", 1.0);
 
   const new_circle = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
-  new_circle.setAttribute("class", "normal-node");
+  new_circle.setAttribute("class", "normal-node node-circle");
   new_circle.setAttribute("cx", 10);
   new_circle.setAttribute("cy", 10);
   new_circle.setAttribute("r", 20);
