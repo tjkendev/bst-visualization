@@ -166,6 +166,11 @@ class AVLTree {
     } else {
       node.set_right(new_node);
     }
+    let cur = node;
+    while(cur !== null) {
+      cur.update_height();
+      cur = cur.prt;
+    }
     return new_node;
   }
 
@@ -233,6 +238,11 @@ class AVLTree {
         this.cur = c_prt.left;
       }
     }
+    let cur = node;
+    while(cur !== null) {
+      cur.update_height();
+      cur = cur.prt;
+    }
     return node;
   }
 
@@ -242,6 +252,7 @@ class AVLTree {
 
   finish_retracing() {
     this.cur = this.prt = null;
+    return true;
   }
 
   insert_retracing_step() {
@@ -250,6 +261,7 @@ class AVLTree {
       return this.finish_retracing();
     }
     // assert (node !== null);
+    let update = false;
     prt.update_height();
     if(prt.is_left(node)) {
       if(prt.factor() == -2) {
@@ -266,14 +278,13 @@ class AVLTree {
             this.root = node;
           }
         }
-        return true;
+        update = true;
       } else {
         if(prt.factor() >= 0) {
           return this.finish_retracing();
         }
         this.cur = prt;
         this.prt = prt.prt;
-        return false;
       }
     } else {
       if(prt.factor() == 2) {
@@ -290,16 +301,21 @@ class AVLTree {
             this.root = node;
           }
         }
-        return true;
+        update = true;
       } else {
         if(prt.factor() <= 0) {
           return this.finish_retracing();
         }
         this.cur = prt;
         this.prt = prt.prt;
-        return false;
       }
     }
+    let cur = node;
+    while(cur !== null) {
+      cur.update_height();
+      cur = cur.prt;
+    }
+    return update;
   }
 
   remove_retracing_step() {
@@ -307,6 +323,7 @@ class AVLTree {
     if(prt === null) {
       return this.finish_retracing();
     }
+    let update = false;
     prt.update_height();
     if(prt.is_left(node)) {
       if(prt.factor() == 2) {
@@ -324,7 +341,7 @@ class AVLTree {
         if(this.prt === null) {
           this.root = this.cur;
         }
-        return true;
+        update = true;
       } else {
         if(prt.factor() == 1) {
           return this.finish_retracing();
@@ -334,7 +351,6 @@ class AVLTree {
         if(this.prt === null) {
           this.root = this.cur;
         }
-        return false;
       }
     } else {
       if(prt.factor() == -2) {
@@ -352,7 +368,7 @@ class AVLTree {
         if(this.prt === null) {
           this.root = this.cur;
         }
-        return true;
+        update = true;
       } else {
         if(prt.factor() == -1) {
           return this.finish_retracing();
@@ -362,9 +378,14 @@ class AVLTree {
         if(this.prt === null) {
           this.root = this.cur;
         }
-        return false;
       }
     }
+    let cur = node;
+    while(cur !== null) {
+      cur.update_height();
+      cur = cur.prt;
+    }
+    return update;
   }
 
   get_update_nodes() {
@@ -389,6 +410,26 @@ function translate_obj(node_map, result, tl) {
     },
     duration: 1000,
     easing: 'linear',
+  }).add({
+    targets: ['circle.node-circle'],
+    stroke: [{value: (el) => {
+      const n_id = el.parentNode.getAttribute("nid");
+      const node = node_map[n_id];
+      switch(node.factor()) {
+        case -2:
+          return "#0000ff";
+        case -1:
+          return "#8888ff";
+        case 0: default:
+          return "#000000";
+        case 1:
+          return "#ff8888";
+        case 2:
+          return "#ff0000";
+      }
+    }}],
+    offset: '-=1000',
+    duration: 1000,
   }).add({
     targets: ['path.edge'],
     d: [{value: (el) => {
@@ -565,6 +606,8 @@ window.onload = () => {
 
   set_add_random(add_tree_node);
   set_remove_random(remove_tree_node, node_view);
+  set_add_inc(add_tree_node);
+  set_add_dec(add_tree_node);
   set_add_value(add_tree_node);
   set_remove_value(remove_tree_node);
 };

@@ -103,6 +103,8 @@ function end_change_color(target_node, update_nodes) {
   }
 }
 
+const NODE_MAX_KEY = 999;
+
 // get a random integer within [0, x)
 function randint(x) {
   return Math.floor(Math.random() * x);
@@ -110,7 +112,7 @@ function randint(x) {
 
 function set_add_random(add_tree_node) {
   document.querySelector(".add-random").onclick = ((el) => {
-    const v = randint(1000);
+    const v = randint(NODE_MAX_KEY + 1);
     add_tree_node(v);
   });
 }
@@ -120,7 +122,7 @@ function set_remove_random(remove_tree_node, node_view) {
     const vs = Object.keys(node_view);
     if(vs.length > 0) {
       const v = parseInt(vs[randint(vs.length)]);
-      if(!isNaN(v) && 0 <= v && v <= 999) {
+      if(!isNaN(v) && 0 <= v && v <= NODE_MAX_KEY) {
         remove_tree_node(v);
       }
     }
@@ -128,10 +130,11 @@ function set_remove_random(remove_tree_node, node_view) {
 }
 
 function set_add_value(add_tree_node) {
+  const input = document.querySelector(".node-key");
   document.querySelector(".add").onclick = ((el) => {
-    const val = document.querySelector(".node-key").value;
+    const val = input.value;
     const v = parseInt(val, 10);
-    if(!isNaN(v) && 0 <= v && v <= 999) {
+    if(!isNaN(v) && 0 <= v && v <= NODE_MAX_KEY) {
       add_tree_node(v);
     }
   });
@@ -141,8 +144,32 @@ function set_remove_value(remove_tree_node) {
   document.querySelector(".remove").onclick = ((el) => {
     const val = document.querySelector(".node-key").value;
     const v = parseInt(val, 10);
-    if(!isNaN(v) && 0 <= v && v <= 999) {
+    if(!isNaN(v) && 0 <= v && v <= NODE_MAX_KEY) {
       remove_tree_node(v);
+    }
+  });
+}
+
+function set_add_inc(add_tree_node) {
+  const input = document.querySelector(".node-key");
+  document.querySelector(".add-inc").onclick = ((el) => {
+    const val = input.value;
+    const v = parseInt(val, 10) + 1;
+    if(!isNaN(v) && 0 <= v && v <= NODE_MAX_KEY) {
+      add_tree_node(v);
+      input.value = v;
+    }
+  });
+}
+
+function set_add_dec(add_tree_node, node_view) {
+  const input = document.querySelector(".node-key");
+  document.querySelector(".add-dec").onclick = ((el) => {
+    const val = input.value;
+    const v = parseInt(val, 10) - 1;
+    if(!isNaN(v) && 0 <= v && v <= NODE_MAX_KEY) {
+      add_tree_node(v);
+      input.value = v;
     }
   });
 }

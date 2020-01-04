@@ -600,7 +600,7 @@ window.onload = () => {
     }
 
     const target_node = node_view[v].node;
-    const update_nodes = tree.get_update_nodes();
+    const update_nodes = tree.get_update_nodes().filter(node => node.val !== v);
     set_node_status(target_node, update_nodes, disable_nodes, false);
 
     const node_num = Object.keys(node_view).length;
@@ -626,6 +626,8 @@ window.onload = () => {
 
   set_add_random(add_tree_node);
   set_remove_random(remove_tree_node, node_view);
+  set_add_inc(add_tree_node);
+  set_add_dec(add_tree_node);
   set_add_value(add_tree_node);
   set_remove_value(remove_tree_node);
 };
