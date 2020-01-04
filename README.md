@@ -7,6 +7,9 @@ Binary Search Tree Visualization
 以下のBSTをWebページ上で可視化したものです。
 
 - Binary Search Tree
+- AVL Tree
+- Bottom-Up Red-Black Tree
+- Left-Leaning Red-Black Tree
 - Bottom-Up Splay Tree
 - Top-Down Splay Tree
 - Scapegoat Tree

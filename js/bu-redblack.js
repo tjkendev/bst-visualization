@@ -601,7 +601,7 @@ window.onload = () => {
     );
   };
 
-  const property_check = () => {
+  const check_constraints = () => {
     let base_depth = -1;
     const leaves = [];
 
