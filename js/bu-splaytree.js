@@ -267,6 +267,13 @@ window.onload = () => {
   const canvas = document.querySelector("svg.canvas");
   const nodes = document.querySelector(".nodes");
   const edges = document.querySelector(".edges");
+  const slider = document.querySelector(".anime-slider");
+  slider.oninput = ((el) => {
+    if(tl !== null) {
+      tl.seek(tl.duration * (slider.value / 100));
+    }
+  });
+  let delete_n_id = null;
 
   const add_node = (v, node) => {
     const n_id = node.id;
@@ -288,15 +295,28 @@ window.onload = () => {
     style["height"] = `${height}px`;
   };
 
-  const remove_tree_node = (v) => {
-    const node_num = Object.keys(node_view).length;
-
+  const init_timeline = () => {
+    if(delete_n_id !== null) {
+      const n_id = delete_n_id;
+      removeNode(n_id);
+      removeEdge(n_id);
+      delete_n_id = null;
+    }
     if(tl !== null) {
       tl.seek(tl.duration);
     }
     tl = anime.timeline({
       duration: 1000,
+      update: (anim) => {
+        slider.value = tl.progress;
+      },
     });
+  };
+
+  const remove_tree_node = (v) => {
+    const node_num = Object.keys(node_view).length;
+
+    init_timeline();
 
     tree.find(v, false);
     const updates = [];
@@ -416,12 +436,7 @@ window.onload = () => {
   };
 
   const add_tree_node = (v) => {
-    if(tl !== null) {
-      tl.seek(tl.duration);
-    }
-    tl = anime.timeline({
-      duration: 1000,
-    });
+    init_timeline();
 
     const result_f = traverse(tree.root);
     let max_depth = result_f.depth;

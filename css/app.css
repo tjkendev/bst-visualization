@@ -3,6 +3,19 @@
   font-weight: bold;
 }
 
+.query-component {
+  padding-top: 10px;
+}
+
+.slider-component {
+  padding-top: 10px;
+}
+
+.slider-component .anime-slider {
+  width: 200px;
+  height: 16px;
+}
+
 .target-node {
   fill: #ff896b;
 }
@@ -17,6 +30,10 @@
 
 .deleted-node {
   fill: gray;
+}
+
+g.node {
+  cursor: pointer;
 }
 
 g.node circle {

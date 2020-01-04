@@ -474,6 +474,11 @@ window.onload = () => {
   const nodes = document.querySelector(".nodes");
   const edges = document.querySelector(".edges");
   const slider = document.querySelector(".anime-slider");
+  slider.oninput = ((el) => {
+    if(tl !== null) {
+      tl.seek(tl.duration * (slider.value / 100));
+    }
+  });
   let delete_n_id = null;
 
   const add_node = (v, node) => {
@@ -506,13 +511,13 @@ window.onload = () => {
     if(tl !== null) {
       tl.seek(tl.duration);
     }
-    tl =  anime.timeline({
+    tl = anime.timeline({
       duration: 1000,
       update: (anim) => {
         slider.value = tl.progress;
       },
     });
-  }
+  };
 
   const remove_tree_node = (v) => {
     const node_num = Object.keys(node_view).length;
@@ -674,10 +679,4 @@ window.onload = () => {
   set_add_dec(add_tree_node);
   set_add_value(add_tree_node);
   set_remove_value(remove_tree_node);
-
-  slider.oninput = ((el) => {
-    if(tl !== null) {
-      tl.seek(tl.duration * (slider.value / 100));
-    }
-  });
 };

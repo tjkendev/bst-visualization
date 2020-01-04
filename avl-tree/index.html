@@ -13,20 +13,26 @@
       <p>各ノードのstrokeの色は balance factor によって変化:
       <span class="box-text" style="background-color: #0000ff; color: white;">-2</span>
       <span class="box-text" style="background-color: #8888ff; color: white;">-1</span>
-      <span class="box-text" style="color: #000000">0</span>
+      <span class="box-text" style="color: #000000; border: solid 1px black;">0</span>
       <span class="box-text" style="background-color: #ff8888; color: white;">1</span>
       <span class="box-text" style="background-color: #ff0000; color: white;">2</span>
       </p>
-      <div>
-        <input class="node-key" type="text" placeholder="0 ~ 999" />
-        <button class="add" type="button">追加/検索</button>
-        <button class="add-inc" type="button">+1追加/検索</button>
-        <button class="add-dec" type="button">-1追加/検索</button>
-        <button class="remove" type="button">削除</button>
+      <div class="query-component">
+        <div>
+          <input class="node-key" type="text" placeholder="0 ~ 999" />
+          <button class="add" type="button">追加/検索</button>
+          <button class="add-inc" type="button">+1追加/検索</button>
+          <button class="add-dec" type="button">-1追加/検索</button>
+          <button class="remove" type="button">削除</button>
+        </div>
+        <div>
+          <button class="add-random" type="button">ランダム追加/検索</button>
+          <button class="remove-random" type="button">ランダム削除</button>
+        </div>
       </div>
-      <div>
-        <button class="add-random" type="button">ランダム追加/検索</button>
-        <button class="remove-random" type="button">ランダム削除</button>
+      <div class="slider-component">
+        <span>アニメーション:</span>
+        <input type="range" class="anime-slider" />
       </div>
       <div>
         <svg class="canvas">

@@ -461,6 +461,13 @@ window.onload = () => {
   const canvas = document.querySelector("svg.canvas");
   const nodes = document.querySelector(".nodes");
   const edges = document.querySelector(".edges");
+  const slider = document.querySelector(".anime-slider");
+  slider.oninput = ((el) => {
+    if(tl !== null) {
+      tl.seek(tl.duration * (slider.value / 100));
+    }
+  });
+  let delete_n_id = null;
 
   const add_node = (v, node) => {
     const n_id = node.id;
@@ -482,15 +489,28 @@ window.onload = () => {
     style["height"] = `${height}px`;
   };
 
-  const remove_tree_node = (v) => {
-    const node_num = Object.keys(node_view).length;
-
+  const init_timeline = () => {
+    if(delete_n_id !== null) {
+      const n_id = delete_n_id;
+      removeNode(n_id);
+      removeEdge(n_id);
+      delete_n_id = null;
+    }
     if(tl !== null) {
       tl.seek(tl.duration);
     }
     tl = anime.timeline({
       duration: 1000,
+      update: (anim) => {
+        slider.value = tl.progress;
+      },
     });
+  };
+
+  const remove_tree_node = (v) => {
+    const node_num = Object.keys(node_view).length;
+
+    init_timeline();
 
     let max_depth = 0;
     {
@@ -541,12 +561,8 @@ window.onload = () => {
 
     tl.complete = () => {
       end_change_color(target_node, update_nodes);
-
-      if(v_n_id !== null) {
-        removeNode(v_n_id);
-        removeEdge(v_n_id);
-      }
     };
+    delete_n_id = v_n_id;
 
     change_canvas_size(
       (node_num+1) * NODE_W + BASE_X*2,
@@ -555,12 +571,7 @@ window.onload = () => {
   };
 
   const add_tree_node = (v) => {
-    if(tl !== null) {
-      tl.seek(tl.duration);
-    }
-    tl = anime.timeline({
-      duration: 1000,
-    });
+    init_timeline();
 
     tl.add({
       duration: 1000,

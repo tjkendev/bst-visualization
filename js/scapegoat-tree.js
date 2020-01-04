@@ -399,6 +399,13 @@ window.onload = () => {
   const canvas = document.querySelector("svg.canvas");
   const nodes = document.querySelector(".nodes");
   const edges = document.querySelector(".edges");
+  const slider = document.querySelector(".anime-slider");
+  slider.oninput = ((el) => {
+    if(tl !== null) {
+      tl.seek(tl.duration * (slider.value / 100));
+    }
+  });
+  let delete_n_ids = null;
 
   const add_node = (v, node) => {
     const n_id = node.id;
@@ -419,6 +426,26 @@ window.onload = () => {
     const style = canvas.style;
     style["width"] = `${width}px`;
     style["height"] = `${height}px`;
+  };
+
+  const init_timeline = () => {
+    if(delete_n_ids !== null) {
+      const n_ids = delete_n_ids;
+      for(let n_id of n_ids) {
+        removeNode(n_id);
+        removeEdge(n_id);
+      }
+      delete_n_ids = null;
+    }
+    if(tl !== null) {
+      tl.seek(tl.duration);
+    }
+    tl = anime.timeline({
+      duration: 1000,
+      update: (anim) => {
+        slider.value = tl.progress;
+      },
+    });
   };
 
   const set_node_status = (target_node, update_nodes, disable_nodes, is_delete) => {
@@ -456,12 +483,8 @@ window.onload = () => {
         clist.remove("update-node");
         clist.add("normal-node");
       }
-
-      for(let node of disable_nodes) {
-        removeNode(node.id);
-        removeEdge(node.id);
-      }
     };
+    delete_n_ids = Array.from(disable_nodes).map(node => node.id);
   };
 
   const remove_tree_node = (v) => {
@@ -469,12 +492,7 @@ window.onload = () => {
 
     const node_num = tree.get_size();
 
-    if(tl !== null) {
-      tl.seek(tl.duration);
-    }
-    tl = anime.timeline({
-      duration: 1000,
-    });
+    init_timeline();
 
     let max_depth = translate_tree(tree);
 
@@ -569,12 +587,7 @@ window.onload = () => {
   const add_tree_node = (v) => {
     disable_alpha();
 
-    if(tl !== null) {
-      tl.seek(tl.duration);
-    }
-    tl = anime.timeline({
-      duration: 1000,
-    });
+    init_timeline();
 
     let max_depth = translate_tree(tree);
 

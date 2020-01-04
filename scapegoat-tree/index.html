@@ -14,16 +14,22 @@
         <span>alpha(0.5 ~ 1.0): </span>
         <input class="alpha-value" type="text" placeholder="0.5 ~ 1.0 (default 0.7)" value="0.7" />
       </div>
-      <div>
-        <input class="node-key" type="text" placeholder="0 ~ 999" />
-        <button class="add" type="button">追加/検索</button>
-        <button class="add-inc" type="button">+1追加/検索</button>
-        <button class="add-dec" type="button">-1追加/検索</button>
-        <button class="remove" type="button">削除</button>
+      <div class="query-component">
+        <div>
+          <input class="node-key" type="text" placeholder="0 ~ 999" />
+          <button class="add" type="button">追加/検索</button>
+          <button class="add-inc" type="button">+1追加/検索</button>
+          <button class="add-dec" type="button">-1追加/検索</button>
+          <button class="remove" type="button">削除</button>
+        </div>
+        <div>
+          <button class="add-random" type="button">ランダム追加/検索</button>
+          <button class="remove-random" type="button">ランダム削除</button>
+        </div>
       </div>
-      <div>
-        <button class="add-random" type="button">ランダム追加/検索</button>
-        <button class="remove-random" type="button">ランダム削除</button>
+      <div class="slider-component">
+        <span>アニメーション:</span>
+        <input type="range" class="anime-slider" />
       </div>
       <div>
         <svg class="canvas">

@@ -2,6 +2,26 @@
 
 const anime = window.anime;
 
+const EDGE_B = 10;
+const NODE_W = 20, NODE_H = 40;
+const BASE_X = 55, BASE_Y = 30;
+const FIRST_X = 10, FIRST_Y = 10;
+const C_SIZE = 20;
+
+function get_node_px(p) {
+  return p[0] * NODE_W + BASE_X;
+}
+
+function get_node_py(p) {
+  return p[1] * NODE_H + BASE_Y;
+}
+
+function get_edge_pos(p) {
+  const [rx, ry] = p;
+  return [rx * NODE_W + EDGE_B + BASE_X, ry * NODE_H + EDGE_B + BASE_Y];
+}
+
+
 function createNode(val, id) {
   const new_g = document.createElementNS("http://www.w3.org/2000/svg", 'g');
   new_g.setAttribute("class", `node${id} node`);
@@ -10,11 +30,17 @@ function createNode(val, id) {
   new_g.setAttribute("nid", id);
   new_g.setAttribute("opacity", 1.0);
 
+  // add an onclick event listener
+  new_g.onclick = ((el) => {
+    const input = document.querySelector(".node-key");
+    input.value = val;
+  });
+
   const new_circle = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
   new_circle.setAttribute("class", "normal-node node-circle");
-  new_circle.setAttribute("cx", 10);
-  new_circle.setAttribute("cy", 10);
-  new_circle.setAttribute("r", 20);
+  new_circle.setAttribute("cx", FIRST_X);
+  new_circle.setAttribute("cy", FIRST_Y);
+  new_circle.setAttribute("r", C_SIZE);
 
   const new_text = document.createElementNS("http://www.w3.org/2000/svg", 'text');
   new_text.setAttribute("class", "node-text");
@@ -28,9 +54,10 @@ function createNode(val, id) {
 }
 
 function createEdge(val, id) {
+  const x = FIRST_X + EDGE_B, y = FIRST_Y + EDGE_B;
   const new_el = document.createElementNS("http://www.w3.org/2000/svg", 'path');
   new_el.setAttribute("class", `edge${id} edge`);
-  new_el.setAttribute("d", `M25,25L25,25L25,25`);
+  new_el.setAttribute("d", `M${x},${y}L${x},${y}L${x},${y}`);
   new_el.setAttribute("value", val);
   new_el.setAttribute("nid", id);
   new_el.setAttribute("opacity", 1.0);
@@ -111,19 +138,23 @@ function randint(x) {
 }
 
 function set_add_random(add_tree_node) {
+  const input = document.querySelector(".node-key");
   document.querySelector(".add-random").onclick = ((el) => {
     const v = randint(NODE_MAX_KEY + 1);
     add_tree_node(v);
+    input.value = v;
   });
 }
 
 function set_remove_random(remove_tree_node, node_view) {
+  const input = document.querySelector(".node-key");
   document.querySelector(".remove-random").onclick = ((el) => {
     const vs = Object.keys(node_view);
     if(vs.length > 0) {
       const v = parseInt(vs[randint(vs.length)]);
       if(!isNaN(v) && 0 <= v && v <= NODE_MAX_KEY) {
         remove_tree_node(v);
+        input.value = v;
       }
     }
   });
@@ -172,22 +203,5 @@ function set_add_dec(add_tree_node, node_view) {
       input.value = v;
     }
   });
-}
-
-const EDGE_B = 10;
-const NODE_W = 20, NODE_H = 40;
-const BASE_X = 55, BASE_Y = 30;
-
-function get_node_px(p) {
-  return p[0] * NODE_W + BASE_X;
-}
-
-function get_node_py(p) {
-  return p[1] * NODE_H + BASE_Y;
-}
-
-function get_edge_pos(p) {
-  const [rx, ry] = p;
-  return [rx * NODE_W + EDGE_B + BASE_X, ry * NODE_H + EDGE_B + BASE_Y];
 }
 
