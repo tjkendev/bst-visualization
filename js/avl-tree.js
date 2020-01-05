@@ -398,19 +398,8 @@ class AVLTree {
 }
 
 function translate_obj(node_map, result, tl) {
+  default_translate_obj(node_map, result, tl);
   tl.add({
-    targets: ['g.node'],
-    translateX: (el) => {
-      const n_id = el.getAttribute("nid");
-      return get_node_px(result[n_id]);
-    },
-    translateY: (el) => {
-      const n_id = el.getAttribute("nid");
-      return get_node_py(result[n_id]);
-    },
-    duration: 1000,
-    easing: 'linear',
-  }).add({
     targets: ['circle.node-circle'],
     stroke: [{value: (el) => {
       const n_id = el.parentNode.getAttribute("nid");
@@ -430,27 +419,6 @@ function translate_obj(node_map, result, tl) {
     }}],
     offset: '-=1000',
     duration: 1000,
-  }).add({
-    targets: ['path.edge'],
-    d: [{value: (el) => {
-      const n_id = el.getAttribute("nid");
-      const node = node_map[n_id];
-      const [fx, fy] = get_edge_pos(result[n_id]);
-
-      const l_child = node.left, r_child = node.right;
-      let l_tx = fx, l_ty = fy;
-      if(l_child !== null) {
-        [l_tx, l_ty] = get_edge_pos(result[l_child.id]);
-      }
-      let r_tx = fx, r_ty = fy;
-      if(r_child !== null) {
-        [r_tx, r_ty] = get_edge_pos(result[r_child.id]);
-      }
-      return `M${l_tx},${l_ty}L${fx},${fy}L${r_tx},${r_ty}`;
-    }}],
-    offset: '-=1000',
-    duration: 1000,
-    easing: 'linear',
   });
 }
 
