@@ -1,69 +1,8 @@
 "use strict";
 
-let node_id_gen = 0;
-class Node {
+class Node extends BaseNode {
   constructor(val) {
-    this.left = this.right = null;
-    this.prt = null;
-    this.val = val;
-    this.id = ++node_id_gen;
-  }
-
-  remove_child(node) {
-    if(this.left === node) {
-      this.remove_left();
-    }
-    if(this.right === node) {
-      this.remove_right();
-    }
-  }
-
-  remove_left() {
-    const left = this.left;
-    if(left !== null) {
-      this.left = left.prt = null;
-    }
-    return left;
-  }
-  remove_right() {
-    const right = this.right;
-    if(right !== null) {
-      this.right = right.prt = null;
-    }
-    return right;
-  }
-
-  set_left(node) {
-    this.remove_left();
-
-    if(node !== null) {
-      if(node.prt !== null) {
-        node.prt.remove_child(node);
-      }
-      node.prt = this;
-    }
-
-    this.left = node;
-  }
-
-  set_right(node) {
-    this.remove_right();
-
-    if(node !== null) {
-      if(node.prt !== null) {
-        node.prt.remove_child(node);
-      }
-      node.prt = this;
-    }
-    this.right = node;
-  }
-
-  is_left(node) {
-    return this.left === node;
-  }
-
-  is_right(node) {
-    return this.right === node;
+    super(val);
   }
 }
 

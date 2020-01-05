@@ -278,3 +278,110 @@ function set_add_dec(add_tree_node, node_view) {
   });
 }
 
+class BaseNode {
+  constructor(val) {
+    this.left = this.right = null;
+    this.prt = null;
+    this.val = val;
+    this.id = ++BaseNode.node_id_gen;
+  }
+
+  remove_child(node) {
+    if(this.left === node) {
+      this.remove_left();
+    }
+    if(this.right === node) {
+      this.remove_right();
+    }
+  }
+
+  remove_left() {
+    const left = this.left;
+    if(left !== null) {
+      this.left = left.prt = null;
+    }
+    return left;
+  }
+  remove_right() {
+    const right = this.right;
+    if(right !== null) {
+      this.right = right.prt = null;
+    }
+    return right;
+  }
+
+  set_left(node) {
+    if(this.left !== null) {
+      this.remove_left();
+    }
+    this.left = node;
+
+    if(node !== null) {
+      if(node.prt !== null) {
+        node.prt.remove_child(node);
+      }
+      node.prt = this;
+    }
+  }
+
+  set_right(node) {
+    if(this.right !== null) {
+      this.remove_right();
+    }
+    this.right = node;
+
+    if(node !== null) {
+      if(node.prt !== null) {
+        node.prt.remove_child(node);
+      }
+      node.prt = this;
+    }
+  }
+
+  rotate_left() {
+    const r = this.right;
+    const p = this.prt, is_left = (p !== null && p.is_left(this));
+    if(r === null) {
+      return null;
+    }
+    this.set_right(r.left);
+    r.set_left(this);
+
+    if(p !== null) {
+      if(is_left) {
+        p.set_left(r);
+      } else {
+        p.set_right(r);
+      }
+    }
+    return r;
+  }
+
+  rotate_right() {
+    const l = this.left;
+    const p = this.prt, is_left = (p !== null && p.is_left(this));
+    if(l === null) {
+      return null;
+    }
+    this.set_left(l.right);
+    l.set_right(this);
+
+    if(p !== null) {
+      if(is_left) {
+        p.set_left(l);
+      } else {
+        p.set_right(l);
+      }
+    }
+    return l;
+  }
+
+  is_left(node) {
+    return this.left === node;
+  }
+
+  is_right(node) {
+    return this.right === node;
+  }
+}
+BaseNode.node_id_gen = 0;

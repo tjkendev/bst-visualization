@@ -1,22 +1,9 @@
 "use strict";
 
-let node_id_gen = 0;
-class Node {
+class Node extends BaseNode {
   constructor(val) {
-    this.left = this.right = null;
-    this.prt = null;
-    this.val = val;
-    this.id = ++node_id_gen;
+    super(val);
     this.size = 1;
-  }
-
-  remove_child(node) {
-    if(this.left === node) {
-      this.remove_left();
-    }
-    if(this.right === node) {
-      this.remove_right();
-    }
   }
 
   remove_left() {
@@ -27,6 +14,7 @@ class Node {
     }
     return left;
   }
+
   remove_right() {
     const right = this.right;
     if(right !== null) {
@@ -61,14 +49,6 @@ class Node {
       this.size += node.size;
     }
     this.right = node;
-  }
-
-  is_left(node) {
-    return this.left === node;
-  }
-
-  is_right(node) {
-    return this.right === node;
   }
 
   update_size() {

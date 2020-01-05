@@ -8,127 +8,25 @@ function is_red(node) {
   return !is_black(node);
 }
 
-let node_id_gen = 0;
-class Node {
+class Node extends BaseNode {
   constructor(val) {
-    this.left = this.right = null;
-    this.prt = null;
-    this.val = val;
-    this.id = ++node_id_gen;
+    super(val);
     // 0 = black, 1 = red
     this.color = Node.RED;
-  }
-
-  remove_child(child) {
-    if(child !== null) {
-      if(this.left === child) {
-        this.left = child.prt = null;
-      }
-      if(this.right === child) {
-        this.right = child.prt = null;
-      }
-    }
-  }
-
-  remove_left() {
-    const left = this.left;
-    if(left !== null) {
-      this.left = left.prt = null;
-    }
-    return left;
-  }
-  remove_right() {
-    const right = this.right;
-    if(right !== null) {
-      this.right = right.prt = null;
-    }
-    return right;
-  }
-
-  set_left(node) {
-    if(this.left !== null) {
-      this.remove_child(this.left);
-    }
-    this.left = node;
-
-    if(node !== null) {
-      if(node.prt !== null) {
-        node.prt.remove_child(node);
-      }
-      node.prt = this;
-    }
-  }
-
-  set_right(node) {
-    if(this.right !== null) {
-      this.remove_child(this.right);
-    }
-    this.right = node;
-
-    if(node !== null) {
-      if(node.prt !== null) {
-        node.prt.remove_child(node);
-      }
-      node.prt = this;
-    }
-  }
-
-  rotate_left() {
-    const r = this.right;
-    const p = this.prt, is_left = (p !== null && p.is_left(this));
-    if(r === null) {
-      return null;
-    }
-    this.set_right(r.left);
-    r.set_left(this);
-
-    if(p !== null) {
-      if(is_left) {
-        p.set_left(r);
-      } else {
-        p.set_right(r);
-      }
-    }
-    return r;
-  }
-
-  rotate_right() {
-    const l = this.left;
-    const p = this.prt, is_left = (p !== null && p.is_left(this));
-    if(l === null) {
-      return null;
-    }
-    this.set_left(l.right);
-    l.set_right(this);
-
-    if(p !== null) {
-      if(is_left) {
-        p.set_left(l);
-      } else {
-        p.set_right(l);
-      }
-    }
-    return l;
-  }
-
-  is_left(node) {
-    return this.left === node;
-  }
-
-  is_right(node) {
-    return this.right === node;
   }
 
   get_sib(node) {
     return (this.is_left(node) ? this.right : this.left);
   }
 }
+
 Object.defineProperty(Node, 'BLACK', {
   value: 0,
   writable: false,
   enumerable: true,
   configurable: false,
 });
+
 Object.defineProperty(Node, 'RED', {
   value: 1,
   writable: false,

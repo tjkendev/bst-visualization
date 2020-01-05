@@ -1,13 +1,9 @@
 "use strict";
 
-let node_id_gen = 0;
-class Node {
+class Node extends BaseNode {
   constructor(val) {
-    this.left = this.right = null;
-    this.prt = null;
-    this.val = val;
+    super(val);
     this.height = 1;
-    this.id = ++node_id_gen;
   }
 
   factor() {
@@ -24,110 +20,43 @@ class Node {
   }
 
   remove_child(node) {
-    if(this.left === node) {
-      this.remove_left();
-    }
-    if(this.right === node) {
-      this.remove_right();
-    }
+    super.remove_child(node);
     this.update_height();
   }
 
   remove_left() {
-    const left = this.left;
-    if(left !== null) {
-      this.left = left.prt = null;
-    }
+    const left = super.remove_left();
     this.update_height();
     return left;
   }
   remove_right() {
-    const right = this.right;
-    if(right !== null) {
-      this.right = right.prt = null;
-    }
+    const right = super.remove_right();
     this.update_height();
     return right;
   }
 
   set_left(node) {
-    if(this.left !== null) {
-      this.remove_left();
-    }
-    this.left = node;
-
-    if(node !== null) {
-      if(node.prt !== null) {
-        node.prt.remove_child(node);
-      }
-      node.prt = this;
-    }
+    super.set_left(node);
     this.update_height();
   }
 
   set_right(node) {
-    if(this.right !== null) {
-      this.remove_right();
-    }
-    this.right = node;
-
-    if(node !== null) {
-      if(node.prt !== null) {
-        node.prt.remove_child(node);
-      }
-      node.prt = this;
-    }
+    super.set_right(node);
     this.update_height();
   }
 
   rotate_left() {
-    const r = this.right;
-    const p = this.prt, is_left = (p !== null && p.is_left(this));
-    if(r === null) {
-      return null;
-    }
-    this.set_right(r.left);
+    const r = super.rotate_left();
     this.update_height();
-    r.set_left(this);
     r.update_height();
-
-    if(p !== null) {
-      if(is_left) {
-        p.set_left(r);
-      } else {
-        p.set_right(r);
-      }
-    }
     return r;
   }
 
   rotate_right() {
-    const l = this.left;
-    const p = this.prt, is_left = (p !== null && p.is_left(this));
-    if(l === null) {
-      return null;
-    }
-    this.set_left(l.right);
+    const l = super.rotate_right();
     this.update_height();
-    l.set_right(this);
     l.update_height();
-
-    if(p !== null) {
-      if(is_left) {
-        p.set_left(l);
-      } else {
-        p.set_right(l);
-      }
-    }
     return l;
-  }
-
-  is_left(node) {
-    return this.left === node;
-  }
-
-  is_right(node) {
-    return this.right === node;
   }
 }
 
