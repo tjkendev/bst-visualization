@@ -397,31 +397,6 @@ class AVLTree {
   }
 }
 
-function translate_obj(node_map, result, tl) {
-  default_translate_obj(node_map, result, tl);
-  tl.add({
-    targets: ['circle.node-circle'],
-    stroke: [{value: (el) => {
-      const n_id = el.parentNode.getAttribute("nid");
-      const node = node_map[n_id];
-      switch(node.factor()) {
-        case -2:
-          return "#0000ff";
-        case -1:
-          return "#8888ff";
-        case 0: default:
-          return "#000000";
-        case 1:
-          return "#ff8888";
-        case 2:
-          return "#ff0000";
-      }
-    }}],
-    offset: '-=1000',
-    duration: 1000,
-  });
-}
-
 window.onload = () => {
   const tree = new AVLTree();
 
@@ -451,6 +426,31 @@ window.onload = () => {
       "edge": d_edge,
     };
     node_map[n_id] = node;
+  };
+
+  const translate_obj = (result) => {
+    default_translate_obj(node_map, result, tl);
+    tl.add({
+      targets: ['circle.node-circle'],
+      stroke: [{value: (el) => {
+        const n_id = el.parentNode.getAttribute("nid");
+        const node = node_map[n_id];
+        switch(node.factor()) {
+          case -2:
+            return "#0000ff";
+          case -1:
+            return "#8888ff";
+          case 0: default:
+            return "#000000";
+          case 1:
+            return "#ff8888";
+          case 2:
+            return "#ff0000";
+        }
+      }}],
+      offset: '-=1000',
+      duration: 1000,
+    });
   };
 
   const change_canvas_size = (width, height) => {
@@ -495,24 +495,12 @@ window.onload = () => {
       target_node = node_view[v].node;
       v_n_id = node.id;
 
-      tl.add({
-        targets: [`path.edge${v_n_id}`],
-        opacity: 0,
-        duration: 500,
-        easing: 'linear',
-        update: update_hidden_node(),
-      }).add({
-        targets: [`g.node${v_n_id}`],
-        opacity: 0,
-        duration: 500,
-        easing: 'linear',
-        update: update_hidden_node(),
-      });
+      hide_nodes(tl, [`g.node${v_n_id}`], [`path.edge${v_n_id}`]);
 
       {
         const result = traverse(tree.root).ps;
         result[v_n_id] = [0, 0];
-        translate_obj(node_map, result, tl);
+        translate_obj(result);
       }
 
       while(tree.is_retracing()) {
@@ -522,7 +510,7 @@ window.onload = () => {
         const result_m = traverse(tree.root);
         const result = result_m.ps;
         result[v_n_id] = [0, 0];
-        translate_obj(node_map, result, tl);
+        translate_obj(result);
         max_depth = Math.max(max_depth, result_m.depth);
       }
 
@@ -558,7 +546,7 @@ window.onload = () => {
     let max_depth = 0;
     {
       const result_m = traverse(tree.root);
-      translate_obj(node_map, result_m.ps, tl);
+      translate_obj(result_m.ps);
       max_depth = result_m.depth;
     }
 
@@ -567,7 +555,7 @@ window.onload = () => {
         continue;
       }
       const result_m = traverse(tree.root);
-      translate_obj(node_map, result_m.ps, tl);
+      translate_obj(result_m.ps);
       max_depth = Math.max(max_depth, result_m.depth);
     }
 

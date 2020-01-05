@@ -164,6 +164,22 @@ function default_translate_obj(node_map, ps, tl) {
   });
 }
 
+function hide_nodes(tl, target_nodes, target_edges) {
+  tl.add({
+    targets: target_edges,
+    opacity: 0,
+    duration: 500,
+    easing: 'linear',
+    update: update_hidden_node(),
+  }).add({
+    targets: target_nodes,
+    opacity: 0,
+    duration: 500,
+    easing: 'linear',
+    update: update_hidden_node(),
+  });
+}
+
 function update_hidden_node() {
   let deleted = false;
   return (anim) => {

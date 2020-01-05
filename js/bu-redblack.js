@@ -406,20 +406,6 @@ class BottomUpRedBlackTree {
   }
 }
 
-function translate_obj(node_map, result, tl) {
-  default_translate_obj(node_map, result, tl);
-  tl.add({
-    targets: ['circle.node-circle'],
-    stroke: [{value: (el) => {
-      const n_id = el.parentNode.getAttribute("nid");
-      const node = node_map[n_id];
-      return (node.color === Node.RED ? "#ff0000" : "#000000");
-    }}],
-    offset: '-=1000',
-    duration: 1000,
-  });
-}
-
 window.onload = () => {
   const tree = new BottomUpRedBlackTree();
 
@@ -457,6 +443,20 @@ window.onload = () => {
     style["height"] = `${height}px`;
   };
 
+  const translate_obj = (result) => {
+    default_translate_obj(node_map, result, tl);
+    tl.add({
+      targets: ['circle.node-circle'],
+      stroke: [{value: (el) => {
+        const n_id = el.parentNode.getAttribute("nid");
+        const node = node_map[n_id];
+        return (node.color === Node.RED ? "#ff0000" : "#000000");
+      }}],
+      offset: '-=1000',
+      duration: 1000,
+    });
+  }
+
   const init_timeline = () => {
     if(delete_n_id !== null) {
       const n_id = delete_n_id;
@@ -483,7 +483,7 @@ window.onload = () => {
     let max_depth = 0;
     {
       const result_m = traverse(tree.root);
-      translate_obj(node_map, result_m.ps, tl);
+      translate_obj(result_m.ps);
       max_depth = result_m.depth;
     }
 
@@ -495,19 +495,7 @@ window.onload = () => {
       v_n_id = node.id;
       target_node = node_view[v].node;
 
-      tl.add({
-        targets: [`path.edge${v_n_id}`],
-        opacity: 0,
-        duration: 500,
-        easing: 'linear',
-        update: update_hidden_node(),
-      }).add({
-        targets: [`g.node${v_n_id}`],
-        opacity: 0,
-        duration: 500,
-        easing: 'linear',
-        update: update_hidden_node(),
-      });
+      hide_nodes(tl, [`g.node${v_n_id}`], [`path.edge${v_n_id}`]);
 
       let updated = true;
       const step = tree.remove_rebalancing();
@@ -516,7 +504,7 @@ window.onload = () => {
         const result = result_m.ps;
         result[v_n_id] = [0, 0];
         max_depth = Math.max(max_depth, result_m.depth);
-        translate_obj(node_map, result, tl);
+        translate_obj(result);
 
         if(!updated) break;
         updated = !step.next().done;
@@ -555,7 +543,7 @@ window.onload = () => {
     let max_depth = 0;
     {
       const result_m = traverse(tree.root);
-      translate_obj(node_map, result_m.ps, tl);
+      translate_obj(result_m.ps);
       max_depth = result_m.depth;
     }
 
@@ -563,7 +551,7 @@ window.onload = () => {
     while(!step.next().done) {
       const result_m = traverse(tree.root);
 
-      translate_obj(node_map, result_m.ps, tl);
+      translate_obj(result_m.ps);
       max_depth = Math.max(max_depth, result_m.depth);
     }
 

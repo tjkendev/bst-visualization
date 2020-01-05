@@ -189,10 +189,6 @@ class BinarySearchTree {
   }
 }
 
-function translate_obj(node_map, result, tl) {
-  default_translate_obj(node_map, result, tl);
-}
-
 window.onload = () => {
   const tree = new BinarySearchTree();
 
@@ -229,6 +225,10 @@ window.onload = () => {
     style["width"] = `${width}px`;
     style["height"] = `${height}px`;
   };
+
+  const translate_obj = (result) => {
+    default_translate_obj(node_map, result, tl);
+  }
 
   const init_timeline = () => {
     if(delete_n_id !== null) {
@@ -267,23 +267,11 @@ window.onload = () => {
       target_node = node_view[v].node;
       v_n_id = node.id;
 
-      tl.add({
-        targets: [`path.edge${v_n_id}`],
-        opacity: 0,
-        duration: 500,
-        easing: 'linear',
-        update: update_hidden_node(),
-      }).add({
-        targets: [`g.node${v_n_id}`],
-        opacity: 0,
-        duration: 500,
-        easing: 'linear',
-        update: update_hidden_node(),
-      });
+      hide_nodes(tl, [`g.node${v_n_id}`], [`path.edge${v_n_id}`]);
 
       const result = traverse(tree.root).ps;
       result[v_n_id] = [0, 0];
-      translate_obj(node_map, result, tl);
+      translate_obj(result);
 
       delete node_view[v];
       delete node_map[v_n_id];
@@ -317,7 +305,7 @@ window.onload = () => {
       add_node(v, node);
 
       const result_m = traverse(tree.root);
-      translate_obj(node_map, result_m.ps, tl);
+      translate_obj(result_m.ps);
       max_depth = Math.max(max_depth, result_m.depth);
     }
 

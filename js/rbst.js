@@ -285,10 +285,6 @@ class RandomizedBinarySearchTree {
   }
 }
 
-function translate_obj(node_map, result, tl) {
-  default_translate_obj(node_map, result, tl);
-}
-
 window.onload = () => {
   const tree = new RandomizedBinarySearchTree();
 
@@ -326,6 +322,10 @@ window.onload = () => {
     style["width"] = `${width}px`;
     style["height"] = `${height}px`;
   };
+
+  const translate_obj = (result) => {
+    default_translate_obj(node_map, result, tl);
+  }
 
   const init_timeline = () => {
     if(delete_n_id !== null) {
@@ -366,19 +366,7 @@ window.onload = () => {
       target_node = node_view[v].node;
       v_n_id = node.id;
 
-      tl.add({
-        targets: [`path.edge${v_n_id}`],
-        opacity: 0,
-        duration: 500,
-        easing: 'linear',
-        update: update_hidden_node(),
-      }).add({
-        targets: [`g.node${v_n_id}`],
-        opacity: 0,
-        duration: 500,
-        easing: 'linear',
-        update: update_hidden_node(),
-      });
+      hide_nodes(tl, [`g.node${v_n_id}`], [`path.edge${v_n_id}`]);
 
       let updated = true;
       while(tree.delete_step()) {
@@ -414,7 +402,7 @@ window.onload = () => {
           const node = e[0], pos = e[1];
           result[node.id] = [cursor++, pos];
         }
-        translate_obj(node_map, result, tl);
+        translate_obj(result);
       }
 
       tree.finish_delete();
@@ -425,7 +413,7 @@ window.onload = () => {
         result[v_n_id] = [0, 0];
         max_depth = Math.max(max_depth, result_m.depth);
 
-        translate_obj(node_map, result, tl);
+        translate_obj(result);
       }
 
       for(let e of tree.get_update_nodes()) {
@@ -491,7 +479,7 @@ window.onload = () => {
           const node = e[0], pos = e[1];
           result[node.id] = [cursor++, pos];
         }
-        translate_obj(node_map, result, tl);
+        translate_obj(result);
 
         if(!updated) {
           break;

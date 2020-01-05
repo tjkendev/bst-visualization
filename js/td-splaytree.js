@@ -249,10 +249,6 @@ class TopDownSplayTree {
   }
 }
 
-function translate_obj(node_map, result, tl) {
-  default_translate_obj(node_map, result, tl);
-}
-
 window.onload = () => {
   const tree = new TopDownSplayTree();
 
@@ -290,6 +286,10 @@ window.onload = () => {
     style["width"] = `${width}px`;
     style["height"] = `${height}px`;
   };
+
+  const translate_obj = (result) => {
+    default_translate_obj(node_map, result, tl);
+  }
 
   const init_timeline = () => {
     if(delete_n_id !== null) {
@@ -338,7 +338,7 @@ window.onload = () => {
         const v = result_r.ps[n_id];
         result[n_id] = [v[0] + cursor, v[1] + 1];
       }
-      translate_obj(node_map, result, tl);
+      translate_obj(result);
 
       if(!updated) break;
       if(tree.is_splaying()) {
@@ -383,19 +383,7 @@ window.onload = () => {
       v_n_id = node.id;
       target_node = node_view[v].node;
 
-      tl.add({
-        targets: [`path.edge${v_n_id}`],
-        opacity: 0,
-        duration: 500,
-        easing: 'linear',
-        update: update_hidden_node(),
-      }).add({
-        targets: [`g.node${v_n_id}`],
-        opacity: 0,
-        duration: 500,
-        easing: 'linear',
-        update: update_hidden_node(),
-      });
+      hide_nodes(tl, [`g.node${v_n_id}`], [`path.edge${v_n_id}`]);
 
       if(right !== null) {
         tree.root = right;
@@ -427,7 +415,7 @@ window.onload = () => {
               const v = result_r.ps[n_id];
               result[n_id] = [v[0] + cursor, v[1] + 2];
             }
-            translate_obj(node_map, result, tl);
+            translate_obj(result);
 
             if(!updated) break;
             if(tree.is_splaying()) {
@@ -452,7 +440,7 @@ window.onload = () => {
           max_depth = Math.max(max_depth, result_m.depth);
 
           result[v_n_id] = [0, 0];
-          translate_obj(node_map, result, tl);
+          translate_obj(result);
         }
         updates.push(...tree.get_update_nodes());
       } else {
@@ -466,7 +454,7 @@ window.onload = () => {
           }
           max_depth = Math.max(max_depth, result_m.depth);
           result[v_n_id] = [0, 0];
-          translate_obj(node_map, result, tl);
+          translate_obj(result);
         }
       }
 

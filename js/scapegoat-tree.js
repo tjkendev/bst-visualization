@@ -352,23 +352,6 @@ class ScapegoatTree {
   }
 }
 
-function translate_obj(node_map, result, tl, alpha) {
-  default_translate_obj(node_map, result, tl);
-  tl.add({
-    targets: ['circle.node-circle'],
-    stroke: [{value: (el) => {
-      const n_id = el.parentNode.getAttribute("nid");
-      const node = node_map[n_id];
-      const min_w = (node.size - 1) / (2 * node.size), max_w = alpha;
-      const weight = Math.max(node.size_left(), node.size_right()) / node.size;
-      const w = Math.min((weight - min_w) / (max_w - min_w), 1.0);
-      return `rgb(${255 * w}, 0, 0)`
-    }}],
-    offset: '-=1000',
-    duration: 1000,
-  });
-}
-
 window.onload = () => {
   const tree = new ScapegoatTree();
 
@@ -407,6 +390,24 @@ window.onload = () => {
     style["width"] = `${width}px`;
     style["height"] = `${height}px`;
   };
+
+  const translate_obj = (result) => {
+    const alpha = tree.alpha;
+    default_translate_obj(node_map, result, tl);
+    tl.add({
+      targets: ['circle.node-circle'],
+      stroke: [{value: (el) => {
+        const n_id = el.parentNode.getAttribute("nid");
+        const node = node_map[n_id];
+        const min_w = (node.size - 1) / (2 * node.size), max_w = alpha;
+        const weight = Math.max(node.size_left(), node.size_right()) / node.size;
+        const w = Math.min((weight - min_w) / (max_w - min_w), 1.0);
+        return `rgb(${255 * w}, 0, 0)`
+      }}],
+      offset: '-=1000',
+      duration: 1000,
+    });
+  }
 
   const init_timeline = () => {
     if(delete_n_ids !== null) {
@@ -545,22 +546,10 @@ window.onload = () => {
         node_view[node.val].hidden = true;
       }
       if(c_nodes.length > 0) {
-        tl.add({
-          targets: c_edges,
-          opacity: 0,
-          duration: 500,
-          easing: 'linear',
-          update: update_hidden_node(),
-        }).add({
-          targets: c_nodes,
-          opacity: 0,
-          duration: 500,
-          easing: 'linear',
-          update: update_hidden_node(),
-        });
+        hide_nodes(tl, c_nodes, c_edges);
       }
     }
-    translate_obj(node_map, result, tl, tree.alpha);
+    translate_obj(result);
     return max_depth;
   };
 
