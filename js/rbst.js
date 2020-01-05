@@ -359,27 +359,26 @@ window.onload = () => {
 
         const tmp = [];
         for(let n_id in result_m.ps) {
-          const v = result_m.ps[n_id];
+          const [_, y] = result_m.ps[n_id];
           const node = node_map[n_id];
-          tmp.push([node, v[1]]);
+          tmp.push([node, y]);
         }
         const c_base = (tree.cur !== null ? result_m.ps[tree.cur.id][1] : 0);
         max_depth = Math.max(max_depth, result_l.depth + c_base + 2, result_r.depth + c_base + 2);
         for(let n_id in result_l.ps) {
-          const v = result_l.ps[n_id];
+          const [_, y] = result_l.ps[n_id];
           const node = node_map[n_id];
-          tmp.push([node, v[1] + c_base + 2]);
+          tmp.push([node, y + c_base + 2]);
         }
         for(let n_id in result_r.ps) {
-          const v = result_r.ps[n_id];
+          const [_, y] = result_r.ps[n_id];
           const node = node_map[n_id];
-          tmp.push([node, v[1] + c_base + 2]);
+          tmp.push([node, y + c_base + 2]);
         }
         tmp.push([node, 0]);
         tmp.sort((x, y) => x[0].val - y[0].val);
         let cursor = 0;
-        for(let e of tmp) {
-          const node = e[0], pos = e[1];
+        for(let [node, pos] of tmp) {
           result[node.id] = [cursor++, pos];
         }
         translate_obj(result);
@@ -442,21 +441,20 @@ window.onload = () => {
         const tmp = [];
 
         for(let n_id in result_m.ps) {
-          const v = result_m.ps[n_id];
+          const [_, y] = result_m.ps[n_id];
           const node = node_map[n_id];
-          tmp.push([node, v[1]]);
+          tmp.push([node, y]);
         }
         const c_base = Math.max(result_m.ps[tree.left.id][1], result_m.ps[tree.right.id][1]);
         max_depth = Math.max(max_depth, result_c.depth + c_base + 2);
         for(let n_id in result_c.ps) {
-          const v = result_c.ps[n_id];
+          const [_, y] = result_c.ps[n_id];
           const node = node_map[n_id];
-          tmp.push([node, v[1] + c_base + 2]);
+          tmp.push([node, y + c_base + 2]);
         }
         tmp.sort((x, y) => x[0].val - y[0].val);
         let cursor = 0;
-        for(let e of tmp) {
-          const node = e[0], pos = e[1];
+        for(let [node, pos] of tmp) {
           result[node.id] = [cursor++, pos];
         }
         translate_obj(result);

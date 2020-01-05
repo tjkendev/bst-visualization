@@ -150,8 +150,7 @@ class TopDownSplayTree {
 window.onload = () => {
   const tree = new TopDownSplayTree();
 
-  const node_view = {};
-  const node_map = {};
+  const node_view = {}, node_map = {};
   let tl = null;
 
   const canvas = document.querySelector("svg.canvas");
@@ -221,20 +220,20 @@ window.onload = () => {
 
       let cursor = 0;
       for(let n_id in result_l.ps) {
-        const v = result_l.ps[n_id];
-        result[n_id] = [v[0], v[1] + 1];
+        const [x, y] = result_l.ps[n_id];
+        result[n_id] = [x, y + 1];
       }
       cursor += Object.keys(result_l.ps).length + 2;
 
       for(let n_id in result_m.ps) {
-        const v = result_m.ps[n_id];
-        result[n_id] = [v[0] + cursor, v[1]];
+        const [x, y] = result_m.ps[n_id];
+        result[n_id] = [cursor + x, y];
       }
       cursor += Object.keys(result_m.ps).length + 2;
 
       for(let n_id in result_r.ps) {
-        const v = result_r.ps[n_id];
-        result[n_id] = [v[0] + cursor, v[1] + 1];
+        const [x, y] = result_r.ps[n_id];
+        result[n_id] = [cursor + x, y + 1];
       }
       translate_obj(result);
 
@@ -296,22 +295,22 @@ window.onload = () => {
 
             let cursor = 0;
             for(let n_id in result_l.ps) {
-              const v = result_l.ps[n_id];
-              result[n_id] = [v[0], v[1] + 1];
+              const [x, y] = result_l.ps[n_id];
+              result[n_id] = [x, y + 1];
             }
             cursor += Object.keys(result_l.ps).length + 2;
 
             result[v_n_id] = [cursor, 0];
             cursor += 2;
             for(let n_id in result_m.ps) {
-              const v = result_m.ps[n_id];
-              result[n_id] = [v[0] + cursor, v[1] + 1];
+              const [x, y] = result_m.ps[n_id];
+              result[n_id] = [cursor + x, y + 1];
             }
             cursor += Object.keys(result_m.ps).length + 2;
 
             for(let n_id in result_r.ps) {
-              const v = result_r.ps[n_id];
-              result[n_id] = [v[0] + cursor, v[1] + 2];
+              const [x, y] = result_r.ps[n_id];
+              result[n_id] = [cursor + x, y + 2];
             }
             translate_obj(result);
 
@@ -332,8 +331,8 @@ window.onload = () => {
           const result_m = traverse(tree.root);
           const result = {};
           for(let n_id in result_m.ps) {
-            const v = result_m.ps[n_id];
-            result[n_id] = [v[0] + 2, v[1]];
+            const [x, y] = result_m.ps[n_id];
+            result[n_id] = [x + 2, y];
           }
           max_depth = Math.max(max_depth, result_m.depth);
 
@@ -347,8 +346,8 @@ window.onload = () => {
           const result_m = traverse(tree.root);
           const result = {};
           for(let n_id in result_m.ps) {
-            const v = result_m.ps[n_id];
-            result[n_id] = [v[0] + 2, v[1]];
+            const [x, y] = result_m.ps[n_id];
+            result[n_id] = [x + 2, y];
           }
           max_depth = Math.max(max_depth, result_m.depth);
           result[v_n_id] = [0, 0];

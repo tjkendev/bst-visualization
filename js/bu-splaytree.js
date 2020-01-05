@@ -229,15 +229,15 @@ window.onload = () => {
 
             let cursor = 0;
             for(let n_id in result_l.ps) {
-              const v = result_l.ps[n_id];
-              result[n_id] = [v[0], v[1] + 1];
+              const [x, y] = result_l.ps[n_id];
+              result[n_id] = [x, y + 1];
             }
             cursor += Object.keys(result_l.ps).length + 2;
             result[v_n_id] = [cursor, 0];
             cursor += 2;
             for(let n_id in result_r.ps) {
-              const v = result_r.ps[n_id];
-              result[n_id] = [v[0] + cursor, v[1] + 1];
+              const [x, y] = result_r.ps[n_id];
+              result[n_id] = [cursor + x, y + 1];
             }
             max_depth = Math.max(max_depth, result_r.depth);
 

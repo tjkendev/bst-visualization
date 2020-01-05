@@ -496,9 +496,9 @@ window.onload = () => {
     const r_base = result_m.depth;
     let max_depth = result_m.depth;
     for(let n_id in result_m.ps) {
-      const v = result_m.ps[n_id];
+      const [_, y] = result_m.ps[n_id];
       const node = node_map[n_id];
-      tmp.push([node, v[1], 0])
+      tmp.push([node, y, 0])
     }
     if(rebuilding) {
       const result_r = tree.rebuild_nodes;
