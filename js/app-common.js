@@ -1,7 +1,5 @@
 "use strict";
 
-const anime = window.anime;
-
 const EDGE_B = 10;
 const NODE_W = 20, NODE_H = 40;
 const BASE_X = 55, BASE_Y = 30;
@@ -21,7 +19,6 @@ function get_edge_pos(p) {
   return [rx * NODE_W + EDGE_B + BASE_X, ry * NODE_H + EDGE_B + BASE_Y];
 }
 
-
 function createNode(val, id) {
   const new_g = document.createElementNS("http://www.w3.org/2000/svg", 'g');
   new_g.setAttribute("class", `node${id} node`);
@@ -33,7 +30,7 @@ function createNode(val, id) {
   // add an onclick event listener
   new_g.onclick = ((el) => {
     const input = document.querySelector(".node-key");
-    input.value = val;
+    if(input) input.value = val;
   });
 
   const new_circle = document.createElementNS("http://www.w3.org/2000/svg", 'circle');
@@ -128,6 +125,29 @@ function end_change_color(target_node, update_nodes) {
     clist.remove("update-node");
     clist.add("normal-node");
   }
+}
+
+function update_hidden_node() {
+  let deleted = false;
+  return (anim) => {
+    if(anim.progress < 100) {
+      if(deleted) {
+        anim.animatables.forEach((e) => {
+          const el = e.target;
+          el.style["display"] = "";
+        });
+        deleted = false;
+      }
+    } else {
+      if(!deleted) {
+        anim.animatables.forEach((e) => {
+          const el = e.target;
+          el.style["display"] = "none";
+        });
+        deleted = true;
+      }
+    }
+  };
 }
 
 const NODE_MAX_KEY = 999;

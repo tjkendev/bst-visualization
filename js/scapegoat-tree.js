@@ -352,7 +352,7 @@ class ScapegoatTree {
   }
 }
 
-function translate_obj(node_map, result, tl) {
+function translate_obj(node_map, result, tl, alpha) {
   tl.add({
     targets: ['g.node'],
     translateX: (el) => {
@@ -365,6 +365,18 @@ function translate_obj(node_map, result, tl) {
     },
     duration: 1000,
     easing: 'linear',
+  }).add({
+    targets: ['circle.node-circle'],
+    stroke: [{value: (el) => {
+      const n_id = el.parentNode.getAttribute("nid");
+      const node = node_map[n_id];
+      const min_w = (node.size - 1) / (2 * node.size), max_w = alpha;
+      const weight = Math.max(node.size_left(), node.size_right()) / node.size;
+      const w = Math.min((weight - min_w) / (max_w - min_w), 1.0);
+      return `rgb(${255 * w}, 0, 0)`
+    }}],
+    offset: '-=1000',
+    duration: 1000,
   }).add({
     targets: ['path.edge'],
     d: [{value: (el) => {
@@ -546,8 +558,7 @@ window.onload = () => {
     }
     tmp.sort((x, y) => x[0].val - y[0].val);
     let cursor = 0, flp = 1;
-    for(let e of tmp) {
-      const node = e[0], pos = e[1], tp = e[2];
+    for(let [node, pos, tp] of tmp) {
       if(tp === 1) {
         result[node.id] = [cursor++, r_base+flp];
         flp ^= 3;
@@ -558,7 +569,6 @@ window.onload = () => {
     const disable_nodes = tree.get_disable_nodes();
     if(disable_nodes.size > 0) {
       const c_nodes = [], c_edges = [];
-      let need_hide = false;
       for(let node of disable_nodes) {
         result[node.id] = [0, 0];
         if(!node_view[node.val] || node_view[node.val].hidden) continue;
@@ -572,15 +582,17 @@ window.onload = () => {
           opacity: 0,
           duration: 500,
           easing: 'linear',
+          update: update_hidden_node(),
         }).add({
           targets: c_nodes,
           opacity: 0,
           duration: 500,
           easing: 'linear',
+          update: update_hidden_node(),
         });
       }
     }
-    translate_obj(node_map, result, tl);
+    translate_obj(node_map, result, tl, tree.alpha);
     return max_depth;
   };
 
@@ -623,7 +635,6 @@ window.onload = () => {
     );
   };
 
-  const values = {};
   let first = true;
 
   const disable_alpha = () => {

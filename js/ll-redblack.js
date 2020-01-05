@@ -555,11 +555,13 @@ window.onload = () => {
             opacity: 0,
             duration: 500,
             easing: 'linear',
+            update: update_hidden_node(),
           }).add({
             targets: [`g.node${v_n_id}`],
             opacity: 0,
             duration: 500,
             easing: 'linear',
+            update: update_hidden_node(),
           });
 
           deleted = true;
