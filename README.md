@@ -13,6 +13,7 @@ Binary Search Tree Visualization
 - Bottom-Up Splay Tree
 - Top-Down Splay Tree
 - Scapegoat Tree
+- Treap
 - Randomized Binary Search Tree
 
 以下から見ることができます。

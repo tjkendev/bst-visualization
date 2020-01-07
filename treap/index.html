@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <title>Visualization (Treap)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/2.2.0/anime.js" integrity="sha256-kRbW+SRRXPogeps8ZQcw2PooWEDPIjVQmN1ocWVQHRY=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="../css/app.css" />
+    <script type="text/javascript" src="../js/app-common.js"></script>
+    <script type="text/javascript" src="../js/treap.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Visualization (Treap)</h1>
+      <p>追加できるKeyの値の範囲は 0 ~ 999 です</p>
+      <p>priorityの値が大きいほどノードの輪郭は赤くなります</p>
+      <div class="query-component">
+        <div>
+          <input class="node-key" type="text" placeholder="0 ~ 999" />
+          <button class="add" type="button">追加/検索</button>
+          <button class="add-inc" type="button">+1追加/検索</button>
+          <button class="add-dec" type="button">-1追加/検索</button>
+          <button class="remove" type="button">削除</button>
+        </div>
+        <div>
+          <button class="add-random" type="button">ランダム追加/検索</button>
+          <button class="remove-random" type="button">ランダム削除</button>
+        </div>
+      </div>
+      <div class="slider-component">
+        <span>アニメーション:</span>
+        <input type="range" class="anime-slider" />
+      </div>
+      <div>
+        <svg class="canvas">
+          <g class="edges"></g>
+          <g class="nodes"></g>
+        </svg>
+      </div>
+      <div>
+        <a href="../index.html">戻る</a>
+      </div>
+    </div>
+  </body>
+</html>
