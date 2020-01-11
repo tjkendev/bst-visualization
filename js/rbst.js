@@ -404,8 +404,10 @@ window.onload = () => {
     }
 
     const update_nodes = Array.from(updates.values()).map(node => node_view[node.val].node);
-    begin_change_color(target_node, update_nodes);
-    tl.complete = () => {
+    tl.changeBegin = () => {
+      begin_change_color(target_node, update_nodes);
+    };
+    tl.changeComplete = () => {
       end_change_color(target_node, update_nodes);
     };
     delete_n_id = v_n_id;
@@ -471,8 +473,10 @@ window.onload = () => {
     const target_node = node_view[v].node;
 
     const update_nodes = tree.get_update_nodes().map(node => node_view[node.val].node);
-    begin_change_color(target_node, update_nodes);
-    tl.complete = () => {
+    tl.changeBegin = () => {
+      begin_change_color(target_node, update_nodes);
+    };
+    tl.changeComplete = () => {
       end_change_color(target_node, update_nodes);
     };
 

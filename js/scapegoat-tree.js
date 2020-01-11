@@ -411,22 +411,24 @@ window.onload = () => {
   };
 
   const set_node_status = (target_node, update_nodes, disable_nodes, is_delete) => {
-    if(target_node !== null) {
-      const clist = target_node.querySelector("circle").classList;
-      clist.remove("normal-node");
-      clist.remove("deleted-node");
-      clist.add("target-node");
-    }
-    for(let node of update_nodes) {
-      if(disable_nodes.has(node) || node === target_node) {
-        continue;
+    tl.changeBegin = () => {
+      if(target_node !== null) {
+        const clist = target_node.querySelector("circle").classList;
+        clist.remove("normal-node");
+        clist.remove("deleted-node");
+        clist.add("target-node");
       }
-      const update_node = node_view[node.val].node;
-      const clist = update_node.querySelector("circle").classList;
-      clist.remove("normal-node");
-      clist.add("update-node");
-    }
-    tl.complete = () => {
+      for(let node of update_nodes) {
+        if(disable_nodes.has(node) || node === target_node) {
+          continue;
+        }
+        const update_node = node_view[node.val].node;
+        const clist = update_node.querySelector("circle").classList;
+        clist.remove("normal-node");
+        clist.add("update-node");
+      }
+    };
+    tl.changeComplete = () => {
       if(target_node !== null) {
         const clist = target_node.querySelector("circle").classList;
         clist.remove("target-node");
