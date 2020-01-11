@@ -9,6 +9,7 @@ Binary Search Tree Visualization
 - Binary Search Tree
 - AVL Tree
 - Bottom-Up Red-Black Tree
+- Top-Down Red-Black Tree
 - Left-Leaning Red-Black Tree
 - Bottom-Up Splay Tree
 - Top-Down Splay Tree

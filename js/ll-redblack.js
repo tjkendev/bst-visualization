@@ -515,6 +515,10 @@ window.onload = () => {
         console.log("F: red and red", node, prt);
         failed = 1;
       }
+      if(is_red(node.right)) {
+        console.log("F: not left-leaning", node, node.right);
+        failed = 1;
+      }
       dfs(node.right, node, bdep);
     };
     if(tree.root !== null && tree.root.color === Node.RED) {
