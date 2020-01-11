@@ -158,10 +158,9 @@ function default_translate_obj(node_map, ps, tl) {
       }
       return `M${l_tx},${l_ty}L${fx},${fy}L${r_tx},${r_ty}`;
     }}],
-    offset: '-=1000',
     duration: 1000,
     easing: 'linear',
-  });
+  }, '-=1000');
 }
 
 function hide_nodes(tl, target_nodes, target_edges) {

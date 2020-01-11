@@ -350,9 +350,8 @@ window.onload = () => {
         const node = node_map[n_id];
         return (node.color === Node.RED ? "#ff0000" : "#000000");
       }}],
-      offset: '-=1000',
       duration: 1000,
-    });
+    }, '-=1000');
   }
 
   const init_timeline = () => {

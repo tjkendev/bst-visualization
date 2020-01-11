@@ -377,9 +377,8 @@ window.onload = () => {
             return "#ff0000";
         }
       }}],
-      offset: '-=1000',
       duration: 1000,
-    });
+    }, '-=1000');
   };
 
   const change_canvas_size = (width, height) => {

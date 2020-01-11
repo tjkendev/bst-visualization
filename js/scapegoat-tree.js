@@ -386,9 +386,8 @@ window.onload = () => {
         const w = Math.min((weight - min_w) / (max_w - min_w), 1.0);
         return `rgb(${255 * w}, 0, 0)`
       }}],
-      offset: '-=1000',
       duration: 1000,
-    });
+    }, '-=1000');
   }
 
   const init_timeline = () => {

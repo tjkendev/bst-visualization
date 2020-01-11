@@ -176,9 +176,8 @@ window.onload = () => {
         const node = node_map[n_id];
         return `rgb(${255 * node.priority}, 0, 0)`
       }}],
-      offset: '-=1000',
       duration: 1000,
-    });
+    }, '-=1000');
   }
 
   const init_timeline = () => {
