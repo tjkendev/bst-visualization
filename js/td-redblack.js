@@ -38,6 +38,7 @@ class BottomUpRedBlackTree {
   constructor() {
     this.clear();
     this.update_nodes = [];
+    this.current_nodes = [];
   }
 
   clear() {
@@ -50,6 +51,8 @@ class BottomUpRedBlackTree {
     this.update_nodes = new Set();
     if(this.root === null) {
       const new_node = new Node(x);
+      this.current_nodes = [new_node];
+
       this.root = new_node;
       yield new_node;
 
@@ -62,22 +65,24 @@ class BottomUpRedBlackTree {
     while(node.val !== x) {
       this.update_nodes.add(node);
       if(is_red(node.left) && is_red(node.right)) {
+        this.update_nodes.add(node.left).add(node.right);
         const prt = node.prt;
         if(is_black(prt)) {
           // Case 1
+          this.current_nodes = [prt, node, node.left, node.right];
           node.color = (prt === null ? Node.BLACK : Node.RED);
           node.left.color = Node.BLACK;
           node.right.color = Node.BLACK;
           yield;
-
-          this.update_nodes.add(node.left);
-          this.update_nodes.add(node.right);
         } else {
           const gprt = prt.prt;
           // assert (gprt !== null);
           if(gprt.is_left(prt)) {
             if(prt.is_left(node)) {
               // Case 2
+              this.current_nodes = [node, node.left, node.right, prt, prt.right, gprt, gprt.right];
+              this.update_nodes.add(prt.right).add(gprt.right);
+
               gprt.rotate_right();
               if(prt.prt === null) {
                 this.root = prt;
@@ -87,20 +92,17 @@ class BottomUpRedBlackTree {
               gprt.color = node.color = Node.RED;
               prt.color = node.left.color = node.right.color = Node.BLACK;
               yield;
-
-              this.update_nodes.add(node.left);
-              this.update_nodes.add(node.right);
             } else {
               // Case 3
+              this.current_nodes = [node, node.left, node.right, prt, prt.left, gprt, gprt.right];
+              this.update_nodes.add(prt.left).add(gprt.right);
+
               prt.rotate_left();
               yield;
 
               node.color = Node.RED;
               node.right.color = prt.right.color = Node.BLACK;
               yield;
-
-              this.update_nodes.add(node.right);
-              this.update_nodes.add(prt.right);
 
               gprt.rotate_right();
               if(node.prt === null) {
@@ -115,15 +117,15 @@ class BottomUpRedBlackTree {
           } else {
             if(prt.is_left(node)) {
               // Case 3
+              this.current_nodes = [node, node.left, node.right, prt, prt.right, gprt, gprt.left];
+              this.update_nodes.add(prt.right).add(gprt.left);
+
               prt.rotate_right();
               yield;
 
               node.color = Node.RED;
               node.left.color = prt.left.color = Node.BLACK;
               yield;
-
-              this.update_nodes.add(node.left);
-              this.update_nodes.add(prt.left);
 
               gprt.rotate_left();
               if(node.prt === null) {
@@ -136,6 +138,8 @@ class BottomUpRedBlackTree {
               yield;
             } else {
               // Case 2
+              this.current_nodes = [node, node.left, node.right, prt, prt.left, gprt, gprt.left];
+              this.update_nodes.add(prt.left).add(gprt.left);
               gprt.rotate_left();
               if(prt.prt === null) {
                 this.root = prt;
@@ -145,9 +149,6 @@ class BottomUpRedBlackTree {
               gprt.color = node.color = Node.RED;
               prt.color = node.left.color = node.right.color = Node.BLACK;
               yield;
-
-              this.update_nodes.add(node.left);
-              this.update_nodes.add(node.right);
             }
           }
         }
@@ -166,6 +167,7 @@ class BottomUpRedBlackTree {
     }
 
     const new_node = new Node(x);
+    this.current_nodes = [new_node];
     if(x < node.val) {
       node.set_left(new_node);
     } else {
@@ -175,6 +177,7 @@ class BottomUpRedBlackTree {
 
     if(is_red(node)) {
       const prt = node.prt;
+      this.current_nodes = [new_node, node, prt];
       // assert(prt !== null);
       if(prt.is_left(node)) {
         if(node.is_left(new_node)) {
@@ -232,10 +235,12 @@ class BottomUpRedBlackTree {
         }
       }
     }
+    this.current_nodes = [];
   }
 
   *remove(x) {
     this.update_nodes = new Set();
+    this.current_nodes = [];
     if(this.root === null) {
       return;
     }
@@ -247,6 +252,14 @@ class BottomUpRedBlackTree {
       this.update_nodes.add(node);
 
       if(is_black(node.left) && is_black(node.right)) {
+        this.current_nodes = [node, node.left, node.right];
+        if(!first) {
+          const sib = prt.get_sib(node);
+          if(sib !== null) {
+            this.current_nodes.push(prt, sib, sib.left, sib.right);
+          }
+        }
+        this.update_nodes.add(node.left).add(node.right);
         node.color = Node.RED;
         yield;
 
@@ -255,13 +268,15 @@ class BottomUpRedBlackTree {
           // assert(prt !== null);
           const sib = prt.get_sib(node);
           if(sib !== null) {
+            //this.current_nodes = [node, node.left, node.right, prt, sib, sib.left, sib.right];
+            this.update_nodes.add(sib).add(sib.left).add(sib.right);
+
             if(is_black(sib.left) && is_black(sib.right)) {
               // Case 2A1
               sib.color = Node.RED;
               prt.color = Node.BLACK;
               yield;
 
-              this.update_nodes.add(sib);
             } else {
               if(prt.is_left(node)) {
                 if(is_red(sib.right)) {
@@ -275,9 +290,6 @@ class BottomUpRedBlackTree {
                   sib.color = Node.RED;
                   prt.color = sib.right.color = Node.BLACK;
                   yield;
-
-                  this.update_nodes.add(sib);
-                  this.update_nodes.add(sib.right);
                 } else {
                   // Case 2A2L
                   sib.rotate_right();
@@ -291,9 +303,6 @@ class BottomUpRedBlackTree {
 
                   prt.color = Node.BLACK;
                   yield;
-
-                  this.update_nodes.add(sib);
-                  this.update_nodes.add(sib.prt);
                 }
               } else {
                 if(is_red(sib.left)) {
@@ -307,9 +316,6 @@ class BottomUpRedBlackTree {
                   sib.color = Node.RED;
                   prt.color = sib.left.color = Node.BLACK;
                   yield;
-
-                  this.update_nodes.add(sib);
-                  this.update_nodes.add(sib.left);
                 } else {
                   // Case 2A2R
                   sib.rotate_left();
@@ -323,9 +329,6 @@ class BottomUpRedBlackTree {
 
                   prt.color = Node.BLACK;
                   yield;
-
-                  this.update_nodes.add(sib);
-                  this.update_nodes.add(sib.prt);
                 }
               }
             }
@@ -374,10 +377,11 @@ class BottomUpRedBlackTree {
           }
         } else {
           // Case 2B2
+          const sib = prt.get_sib(node);
+          this.current_nodes = [node, prt, sib];
           prt.color = Node.RED;
           yield;
 
-          const sib = prt.get_sib(node);
           // assert(sib.color === Node.RED);
           this.update_nodes.add(sib);
           if(prt.is_left(node)) {
@@ -410,6 +414,7 @@ class BottomUpRedBlackTree {
       // assert (prt === target_node);
       const node = target_node, prt = target_node.prt;
       const n_node = node.left || node.right;
+      this.current_nodes = [node];
       if(prt !== null) {
         if(x < prt.val) {
           prt.set_left(n_node);
@@ -428,6 +433,7 @@ class BottomUpRedBlackTree {
       const b_node = target_node, b_prt = target_node.prt;
       const c_node = prt, c_prt = c_node.prt;
       const is_child = b_node.is_right(c_node);
+      this.current_nodes = [b_node, c_node];
       if(!is_child) {
         c_prt.set_left(c_node.right);
         c_node.set_right(b_node.right);
@@ -448,13 +454,18 @@ class BottomUpRedBlackTree {
     }
 
     if(is_red(this.root)) {
+      this.current_nodes = [this.root];
       this.root.color = Node.BLACK;
       yield;
     }
   }
 
   get_update_nodes() {
-    return Array.from(this.update_nodes.values());
+    return Array.from(this.update_nodes.values()).filter(node => node !== null);
+  }
+
+  get_current_nodes() {
+    return this.current_nodes.filter(node => node !== null);
   }
 }
 
@@ -483,6 +494,7 @@ window.onload = () => {
     const d_edge = document.querySelector(`path.edge${n_id}`);
 
     node_view[v] = {
+      "nid": n_id,
       "node": d_node,
       "edge": d_edge,
     };
@@ -495,8 +507,10 @@ window.onload = () => {
     style["height"] = `${height}px`;
   };
 
-  const translate_obj = (result) => {
+  const translate_obj = (result, t_node, c_nodes) => {
     default_translate_obj(node_map, result, tl);
+    const t_view = (t_node !== null ? node_view[t_node.val].node : null);
+    const c_views = c_nodes.map(node => node_view[node.val].node);
     tl.add({
       targets: ['circle.node-circle'],
       stroke: [{value: (el) => {
@@ -505,6 +519,12 @@ window.onload = () => {
         return (node.color === Node.RED ? "#ff0000" : "#000000");
       }}],
       duration: 1000,
+      changeBegin: (tl) => {
+        begin_change_current_color(t_view, c_views);
+      },
+      changeComplete: (tl) => {
+        end_change_current_color(t_view, c_views);
+      },
     }, '-=1000');
   }
 
@@ -537,6 +557,7 @@ window.onload = () => {
 
     let max_depth = traverse(tree.root).depth;
 
+    let t_node = (node_view[v] ? node_map[node_view[v].nid] : null);
     let v_n_id = null;
     let target_node = null;
 
@@ -548,6 +569,7 @@ window.onload = () => {
         v_n_id = node.id;
         target_node = node_view[v].node;
         hide_nodes(tl, [`g.node${v_n_id}`], [`path.edge${v_n_id}`]);
+        t_node = null;
       }
       const {ps: result, depth: depth} = traverse(tree.root);
 
@@ -555,7 +577,8 @@ window.onload = () => {
         result[v_n_id] = [0, 0];
       }
 
-      translate_obj(result);
+      const c_nodes = tree.get_current_nodes();
+      translate_obj(result, t_node, c_nodes);
       max_depth = Math.max(max_depth, depth);
     }
 
@@ -588,16 +611,19 @@ window.onload = () => {
 
     let max_depth = traverse(tree.root).depth;
 
+    let t_node = (node_view[v] ? node_map[node_view[v].nid] : null);
     const step = tree.insert(v);
     while(true) {
       const {value: node, done: done} = step.next();
       if(done) break;
       if(node !== undefined) {
         add_node(v, node);
+        t_node = node;
       }
       const {ps: result, depth: depth} = traverse(tree.root);
 
-      translate_obj(result);
+      const c_nodes = tree.get_current_nodes();
+      translate_obj(result, t_node, c_nodes);
       max_depth = Math.max(max_depth, depth);
     }
 

@@ -10,6 +10,7 @@ class BottomUpSplayTree {
   constructor() {
     this.clear();
     this.update_nodes = [];
+    this.current_nodes = [];
   }
 
   clear() {
@@ -19,6 +20,7 @@ class BottomUpSplayTree {
 
   find(x, need_to_add) {
     this.update_nodes = [];
+    this.current_nodes = [];
     if(this.root === null) {
       this.cur = null;
       if(need_to_add) {
@@ -40,7 +42,7 @@ class BottomUpSplayTree {
     }
     if(x === node.val) {
       this.cur = node;
-      return null;
+      return (need_to_add ? null : node);
     }
 
     if(need_to_add) {
@@ -54,11 +56,15 @@ class BottomUpSplayTree {
       return new_node;
     }
     this.cur = node;
-    return null;
+    return node;
   }
 
   get_update_nodes() {
     return this.update_nodes;
+  }
+
+  get_current_nodes() {
+    return this.current_nodes.filter(node => node !== null);
   }
 
   splaying() {
@@ -66,6 +72,7 @@ class BottomUpSplayTree {
   }
 
   splaying_step() {
+    this.current_nodes = [];
     if(this.cur === null) {
       return false;
     }
@@ -77,6 +84,7 @@ class BottomUpSplayTree {
     }
     const y = x.prt;
     if(y.prt === null) {
+      this.current_nodes = [x, y];
       // zig
       x.prt = null;
       if(y.is_left(x)) {
@@ -89,6 +97,7 @@ class BottomUpSplayTree {
       return true;
     }
     const z = y.prt;
+    this.current_nodes = [x, y, z];
     if(y.is_left(x)) {
       if(z.is_left(y)) {
         // zig-zig
@@ -144,6 +153,7 @@ window.onload = () => {
     const d_edge = document.querySelector(`path.edge${n_id}`);
 
     node_view[v] = {
+      "nid": n_id,
       "node": d_node,
       "edge": d_edge,
     };
@@ -156,8 +166,20 @@ window.onload = () => {
     style["height"] = `${height}px`;
   };
 
-  const translate_obj = (result) => {
+  const translate_obj = (result, t_node, c_nodes) => {
     default_translate_obj(node_map, result, tl);
+    const t_view = (t_node !== null ? node_view[t_node.val].node : null);
+    const c_views = (c_nodes !== null ? c_nodes.map(node => node_view[node.val].node) : []);
+    tl.add({
+      targets: ['circle.node-circle'],
+      duration: 1000,
+      changeBegin: (tl) => {
+        begin_change_current_color(t_view, c_views);
+      },
+      changeComplete: (tl) => {
+        end_change_current_color(t_view, c_views);
+      },
+    }, '-=1000');
   }
 
   const init_timeline = () => {
@@ -183,7 +205,7 @@ window.onload = () => {
 
     init_timeline();
 
-    tree.find(v, false);
+    const t_node = tree.find(v, false);
     const updates = [];
 
     let max_depth = 0;
@@ -193,7 +215,12 @@ window.onload = () => {
 
       max_depth = Math.max(max_depth, result.depth);
 
-      translate_obj(result.ps);
+      const c_nodes = tree.get_current_nodes();
+      if(t_node.val === v) {
+        translate_obj(result.ps, t_node, c_nodes);
+      } else {
+        translate_obj(result.ps, null, c_nodes);
+      }
       if(!updated) {
         break;
       }
@@ -241,7 +268,8 @@ window.onload = () => {
             }
             max_depth = Math.max(max_depth, result_r.depth);
 
-            translate_obj(result);
+            const c_nodes = tree.get_current_nodes();
+            translate_obj(result, node, c_nodes);
             if(!updated) {
               break;
             }
@@ -256,7 +284,8 @@ window.onload = () => {
           const result = result_m.ps;
           max_depth = Math.max(max_depth, result_m.depth);
           result[v_n_id] = [0, 0];
-          translate_obj(result);
+          const c_nodes = tree.get_current_nodes();
+          translate_obj(result, node, c_nodes);
         }
       } else {
         tree.root = left;
@@ -265,7 +294,8 @@ window.onload = () => {
           const result = result_m.ps;
           max_depth = Math.max(max_depth, result_m.depth);
           result[v_n_id] = [0, 0];
-          translate_obj(result);
+          const c_nodes = tree.get_current_nodes();
+          translate_obj(result, node, c_nodes);
         }
       }
 
@@ -293,11 +323,13 @@ window.onload = () => {
 
     const result_f = traverse(tree.root);
     let max_depth = result_f.depth;
-    translate_obj(result_f.ps);
+    translate_obj(result_f.ps, null, null);
 
-    const node = tree.find(v, true);
+    let node = tree.find(v, true);
     if(node !== null) {
       add_node(v, node);
+    } else {
+      node = (node_view[v] ? node_map[node_view[v].nid] : null);
     }
 
     let updated = true;
@@ -306,7 +338,8 @@ window.onload = () => {
 
       max_depth = Math.max(max_depth, result.depth);
 
-      translate_obj(result.ps);
+      const c_nodes = tree.get_current_nodes();
+      translate_obj(result.ps, node, c_nodes);
       if(!updated) {
         break;
       }

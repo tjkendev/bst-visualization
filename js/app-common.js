@@ -127,6 +127,32 @@ function end_change_color(target_node, update_nodes) {
   }
 }
 
+function begin_change_current_color(target_node, current_nodes) {
+  for(const node of current_nodes) {
+    const clist = node.querySelector("circle").classList;
+    if(node === target_node) {
+      clist.remove("target-node");
+      clist.add("current-target-node");
+    } else {
+      clist.remove("update-node");
+      clist.add("current-node");
+    }
+  }
+}
+
+function end_change_current_color(target_node, current_nodes) {
+  for(const node of current_nodes) {
+    const clist = node.querySelector("circle").classList;
+    if(node === target_node) {
+      clist.remove("current-target-node");
+      clist.add("target-node");
+    } else {
+      clist.remove("current-node");
+      clist.add("update-node");
+    }
+  }
+}
+
 function default_translate_obj(node_map, ps, tl) {
   tl.add({
     targets: ['g.node'],

@@ -66,6 +66,7 @@ class AVLTree {
     this.cur = null;
     this.prt = null;
     this.update_nodes = new Set();
+    this.current_nodes = [];
   }
 
   insert(x) {
@@ -185,6 +186,7 @@ class AVLTree {
   }
 
   insert_retracing_step() {
+    this.current_nodes = [];
     const node = this.cur, prt = this.prt;
     if(prt === null) {
       return this.finish_retracing();
@@ -195,12 +197,14 @@ class AVLTree {
     if(prt.is_left(node)) {
       if(prt.factor() == -2) {
         if(node.factor() > 0) {
+          this.current_nodes = [prt, node, node.right];
           node.rotate_left();
           this.prt = prt.rotate_right();
           if(this.prt.prt === null) {
             this.root = node.prt;
           }
         } else {
+          this.current_nodes = [prt, node, node.left];
           prt.rotate_right();
           this.prt = node.prt;
           if(node.prt === null) {
@@ -218,12 +222,14 @@ class AVLTree {
     } else {
       if(prt.factor() == 2) {
         if(node.factor() < 0) {
+          this.current_nodes = [prt, node, node.left];
           node.rotate_right();
           this.prt = prt.rotate_left();
           if(this.prt.prt === null) {
             this.root = node.prt;
           }
         } else {
+          this.current_nodes = [prt, node, node.right];
           prt.rotate_left();
           this.prt = node.prt;
           if(node.prt === null) {
@@ -248,6 +254,7 @@ class AVLTree {
   }
 
   remove_retracing_step() {
+    this.current_nodes = [];
     const node = this.cur, prt = this.prt;
     if(prt === null) {
       return this.finish_retracing();
@@ -259,11 +266,13 @@ class AVLTree {
         const sib = prt.right;
         this.update_nodes.add(sib);
         if(sib.factor() < 0) {
+          this.current_nodes = [node, prt, sib, sib.left];
           this.update_nodes.add(sib.left);
           sib.rotate_right();
           this.cur = prt.rotate_left();
           this.prt = this.cur.prt;
         } else {
+          this.current_nodes = [node, prt, sib];
           this.cur = prt.rotate_left();
           this.prt = this.cur.prt;
         }
@@ -286,11 +295,13 @@ class AVLTree {
         const sib = prt.left;
         this.update_nodes.add(sib);
         if(sib.factor() > 0) {
+          this.current_nodes = [node, prt, sib, sib.right];
           this.update_nodes.add(sib.right);
           sib.rotate_left();
           this.cur = prt.rotate_right();
           this.prt = this.cur.prt;
         } else {
+          this.current_nodes = [node, prt, sib];
           this.cur = prt.rotate_right();
           this.prt = this.cur.prt;
         }
@@ -319,6 +330,10 @@ class AVLTree {
 
   get_update_nodes() {
     return Array.from(this.update_nodes.values());
+  }
+
+  get_current_nodes() {
+    return this.current_nodes.filter(node => node !== null);
   }
 
   retracing(v) {
@@ -357,8 +372,10 @@ window.onload = () => {
     node_map[n_id] = node;
   };
 
-  const translate_obj = (result) => {
+  const translate_obj = (result, t_node, c_nodes) => {
     default_translate_obj(node_map, result, tl);
+    const t_view = (t_node !== null ? node_view[t_node.val].node : null);
+    const c_views = c_nodes.map(node => node_view[node.val].node);
     tl.add({
       targets: ['circle.node-circle'],
       stroke: [{value: (el) => {
@@ -372,12 +389,18 @@ window.onload = () => {
           case 0: default:
             return "#000000";
           case 1:
-            return "#ff8888";
+            return "#d46a6a";
           case 2:
             return "#ff0000";
         }
       }}],
       duration: 1000,
+      changeBegin: (tl) => {
+        begin_change_current_color(t_view, c_views);
+      },
+      changeComplete: (tl) => {
+        end_change_current_color(t_view, c_views);
+      },
     }, '-=1000');
   };
 
@@ -411,9 +434,7 @@ window.onload = () => {
     init_timeline();
 
     let max_depth = traverse(tree.root).ps;
-    tl.add({
-      duration: 1000,
-    });
+    tl.add({ duration: 500 });
 
     let v_n_id = null;
     let target_node = null;
@@ -427,8 +448,9 @@ window.onload = () => {
 
       {
         const result = traverse(tree.root).ps;
+        const c_nodes = tree.get_current_nodes();
         result[v_n_id] = [0, 0];
-        translate_obj(result);
+        translate_obj(result, node, c_nodes);
       }
 
       while(tree.is_retracing()) {
@@ -437,14 +459,17 @@ window.onload = () => {
         }
         const result_m = traverse(tree.root);
         const result = result_m.ps;
+        const c_nodes = tree.get_current_nodes();
         result[v_n_id] = [0, 0];
-        translate_obj(result);
+        translate_obj(result, node, c_nodes);
         max_depth = Math.max(max_depth, result_m.depth);
       }
 
       delete node_view[v];
       delete node_map[v_n_id];
     }
+
+    tl.add({ duration: 500 });
 
     const update_nodes = tree.get_update_nodes().map(node => node_view[node.val].node);
     tl.changeBegin = () => {
@@ -464,9 +489,7 @@ window.onload = () => {
   const add_tree_node = (v) => {
     init_timeline();
 
-    tl.add({
-      duration: 1000,
-    });
+    tl.add({ duration: 500 });
 
     const node = tree.insert(v);
     if(node !== null) {
@@ -476,7 +499,8 @@ window.onload = () => {
     let max_depth = 0;
     {
       const result_m = traverse(tree.root);
-      translate_obj(result_m.ps);
+      const c_nodes = tree.get_current_nodes();
+      translate_obj(result_m.ps, node, c_nodes);
       max_depth = result_m.depth;
     }
 
@@ -485,9 +509,12 @@ window.onload = () => {
         continue;
       }
       const result_m = traverse(tree.root);
-      translate_obj(result_m.ps);
+      const c_nodes = tree.get_current_nodes();
+      translate_obj(result_m.ps, node, c_nodes);
       max_depth = Math.max(max_depth, result_m.depth);
     }
+
+    tl.add({ duration: 500 });
 
     const target_node = node_view[v].node;
     const update_nodes = tree.get_update_nodes().map(node => node_view[node.val].node);
@@ -498,6 +525,7 @@ window.onload = () => {
     tl.changeComplete = () => {
       end_change_color(target_node, update_nodes);
     };
+
     const node_num = Object.keys(node_view).length;
     change_canvas_size(
       (node_num+1) * NODE_W + BASE_X*2,

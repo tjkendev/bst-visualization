@@ -66,11 +66,13 @@ class RandomizedBinarySearchTree {
     this.pv = -1;
     this.cur = null;
     this.update_nodes = new Set();
+    this.current_nodes = [];
     this.prv_d = -1;
   }
 
   find(x) {
     this.update_nodes = new Set();
+    this.current_nodes = [];
     if(this.root === null) {
       return false;
     }
@@ -100,6 +102,7 @@ class RandomizedBinarySearchTree {
   }
 
   delete_step() {
+    this.current_nodes = [this.cur, this.left, this.right];
     if(this.left === null || this.right === null) {
       const node = (this.left || this.right);
       if(node !== null) {
@@ -148,6 +151,7 @@ class RandomizedBinarySearchTree {
   }
 
   prepare_delete(x) {
+    this.current_nodes = [];
     let node = this.root;
     while(node !== null) {
       if(node.val === x) break;
@@ -179,11 +183,13 @@ class RandomizedBinarySearchTree {
   }
 
   insert_step() {
+    this.current_nodes = [];
     const node = this.cur;
     if(node === null) {
       return false;
     }
     this.update_nodes.add(node);
+    this.current_nodes = [this.left, this.right, node];
     if(node.val < this.pv) {
       const left = this.left;
       if(left.val == this.pv) {
@@ -223,6 +229,7 @@ class RandomizedBinarySearchTree {
   prepare_insert(x) {
     // before insert(), check if key = x does not exist in the tree
     this.update_nodes = new Set();
+    this.current_nodes = [];
     const new_node = new Node(x);
     this.left = this.right = new_node;
     let prv = null;
@@ -262,6 +269,10 @@ class RandomizedBinarySearchTree {
 
   get_update_nodes() {
     return Array.from(this.update_nodes.values());
+  }
+
+  get_current_nodes() {
+    return this.current_nodes.filter(node => node !== null);
   }
 }
 
@@ -303,8 +314,20 @@ window.onload = () => {
     style["height"] = `${height}px`;
   };
 
-  const translate_obj = (result) => {
+  const translate_obj = (result, t_node, c_nodes) => {
     default_translate_obj(node_map, result, tl);
+    const t_view = (t_node !== null ? node_view[t_node.val].node : null);
+    const c_views = (c_nodes !== null ? c_nodes.map(node => node_view[node.val].node) : []);
+    tl.add({
+      targets: ['circle.node-circle'],
+      duration: 1000,
+      changeBegin: (tl) => {
+        begin_change_current_color(t_view, c_views);
+      },
+      changeComplete: (tl) => {
+        end_change_current_color(t_view, c_views);
+      },
+    }, '-=1000');
   }
 
   const init_timeline = () => {
@@ -381,7 +404,8 @@ window.onload = () => {
         for(let [node, pos] of tmp) {
           result[node.id] = [cursor++, pos];
         }
-        translate_obj(result);
+        const c_nodes = tree.get_current_nodes();
+        translate_obj(result, node, c_nodes);
       }
 
       tree.finish_delete();
@@ -392,7 +416,8 @@ window.onload = () => {
         result[v_n_id] = [0, 0];
         max_depth = Math.max(max_depth, result_m.depth);
 
-        translate_obj(result);
+        const c_nodes = tree.get_current_nodes();
+        translate_obj(result, node, c_nodes);
       }
 
       for(let e of tree.get_update_nodes()) {
@@ -459,7 +484,8 @@ window.onload = () => {
         for(let [node, pos] of tmp) {
           result[node.id] = [cursor++, pos];
         }
-        translate_obj(result);
+        const c_nodes = tree.get_current_nodes();
+        translate_obj(result, node, c_nodes);
 
         if(!updated) {
           break;

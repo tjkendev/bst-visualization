@@ -11,6 +11,7 @@ class Treap {
   constructor() {
     this.clear();
     this.update_nodes = [];
+    this.current_nodes = [];
   }
 
   clear() {
@@ -20,8 +21,10 @@ class Treap {
 
   insert(x) {
     this.update_nodes = [];
+    this.current_nodes = [];
     if(this.root === null) {
       const new_node = new Node(x);
+      this.current_nodes = [new_node];
       return this.root = this.cur = new_node;
     }
     let node = this.root;
@@ -39,6 +42,7 @@ class Treap {
       }
     }
     const new_node = new Node(x);
+    this.current_nodes = [new_node];
     if(x < node.val) {
       node.set_left(new_node);
     } else {
@@ -53,9 +57,11 @@ class Treap {
     }
     const node = this.cur, prt = node.prt;
     if(prt === null || node.priority < prt.priority) {
+      this.current_nodes = [];
       this.cur = null;
       return false;
     }
+    this.current_nodes = [node, prt];
     if(node.val < prt.val) {
       prt.rotate_right();
     } else {
@@ -69,6 +75,7 @@ class Treap {
 
   prepare_remove(x) {
     this.update_nodes = [];
+    this.current_nodes = [];
     this.cur = null;
     if(this.root === null) {
       return null;
@@ -90,11 +97,14 @@ class Treap {
 
   remove_rotate_step() {
     if(this.cur === null) {
+      this.current_nodes = [];
       return false;
     }
     const node = this.cur, prt = node.prt;
+    this.current_nodes = [node, node.left, node.right];
     if(node.left === null || node.right === null) {
       const n_node = node.left || node.right;
+      if(n_node !== null) this.update_nodes.push(n_node);
       if(prt !== null) {
         if(node.val < prt.val) {
           prt.set_left(n_node);
@@ -127,6 +137,10 @@ class Treap {
 
   get_update_nodes() {
     return this.update_nodes;
+  }
+
+  get_current_nodes() {
+    return this.current_nodes.filter(node => node !== null);
   }
 }
 
@@ -167,8 +181,10 @@ window.onload = () => {
     style["height"] = `${height}px`;
   };
 
-  const translate_obj = (result) => {
+  const translate_obj = (result, t_node, c_nodes) => {
     default_translate_obj(node_map, result, tl);
+    const t_view = (t_node !== null ? node_view[t_node.val].node : null);
+    const c_views = (c_nodes !== null ? c_nodes.map(node => node_view[node.val].node) : []);
     tl.add({
       targets: ['circle.node-circle'],
       stroke: [{value: (el) => {
@@ -177,6 +193,12 @@ window.onload = () => {
         return `rgb(${255 * node.priority}, 0, 0)`
       }}],
       duration: 1000,
+      changeBegin: (tl) => {
+        begin_change_current_color(t_view, c_views);
+      },
+      changeComplete: (tl) => {
+        end_change_current_color(t_view, c_views);
+      },
     }, '-=1000');
   }
 
@@ -207,7 +229,7 @@ window.onload = () => {
     {
       const result = traverse(tree.root);
       max_depth = result.depth;
-      translate_obj(result.ps);
+      translate_obj(result.ps, null, null);
     }
 
     let v_n_id = null;
@@ -222,7 +244,8 @@ window.onload = () => {
       while(tree.remove_rotate_step()) {
         const result = traverse(tree.root);
         max_depth = Math.max(max_depth, result.depth);
-        translate_obj(result.ps);
+        const c_nodes = tree.get_current_nodes();
+        translate_obj(result.ps, node, c_nodes);
       }
 
       hide_nodes(tl, [`g.node${v_n_id}`], [`path.edge${v_n_id}`]);
@@ -230,7 +253,8 @@ window.onload = () => {
         const result = traverse(tree.root);
         max_depth = Math.max(max_depth, result.depth);
         result.ps[v_n_id] = [0, 0];
-        translate_obj(result.ps);
+        const c_nodes = tree.get_current_nodes();
+        translate_obj(result.ps, null, c_nodes);
       }
 
       delete node_view[v];
@@ -257,7 +281,7 @@ window.onload = () => {
 
     const result_f = traverse(tree.root);
     let max_depth = result_f.depth;
-    translate_obj(result_f.ps);
+    translate_obj(result_f.ps, null, null);
 
     const node = tree.insert(v, true);
     if(node !== null) {
@@ -268,7 +292,8 @@ window.onload = () => {
 
         max_depth = Math.max(max_depth, result.depth);
 
-        translate_obj(result.ps);
+        const c_nodes = tree.get_current_nodes();
+        translate_obj(result.ps, node, c_nodes);
         if(!updated) {
           break;
         }

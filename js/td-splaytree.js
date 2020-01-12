@@ -11,8 +11,12 @@ class TopDownSplayTree {
     this.root = null;
     this.left = this.left_c = null;
     this.right = this.right_c = null;
+    this.clear();
+  }
+  clear() {
     this.pv = null;
     this.update_nodes = [];
+    this.current_nodes = [];
   }
   add_left(node) {
     if(this.left === null) {
@@ -49,16 +53,21 @@ class TopDownSplayTree {
     const root = this.root;
     this.pv = null;
     if(root === null) {
-      return this.root = new Node(x);
+      this.root = new Node(x)
+      this.current_nodes = [this.root];
+      return this.root;
     }
     if(root.val === x) {
+      this.current_nodes = [];
       return null;
     }
     const new_node = new Node(x);
     if(x < root.val) {
+      this.current_nodes = [new_node, root.left, root];
       new_node.set_left(root.left);
       new_node.set_right(root);
     } else {
+      this.current_nodes = [new_node, root.right, root];
       new_node.set_right(root.right);
       new_node.set_left(root);
     }
@@ -69,6 +78,7 @@ class TopDownSplayTree {
   build() {
     // assert (this.root !== null)
     const root = this.root;
+    this.current_nodes = [root, this.left_c, this.right_c, this.left, this.right];
     if(this.left_c !== null) {
       this.left_c.set_right(root.left);
     }
@@ -89,9 +99,13 @@ class TopDownSplayTree {
   get_update_nodes() {
     return this.update_nodes;
   }
+  get_current_nodes() {
+    return this.current_nodes.filter(node => node !== null);
+  }
 
   splaying_step() {
     let x = this.root;
+    this.current_nodes = [];
     if(x === null) {
       return false;
     }
@@ -106,9 +120,11 @@ class TopDownSplayTree {
 
       if(this.pv < y.val) {
         // zig-zig (first rotation)
+        this.current_nodes.push(x);
         x.rotate_right();
         this.update_nodes.push(y);
         if(y.left === null) {
+          this.current_nodes.push(y);
           this.root = y;
           return true;
         }
@@ -116,6 +132,7 @@ class TopDownSplayTree {
       }
       // zig-zig (second rotation) or zig-zag (simplified)
       const l = x.remove_left();
+      this.current_nodes.push(l, x);
       this.root = l;
 
       this.add_right(x);
@@ -125,9 +142,11 @@ class TopDownSplayTree {
 
       if(y.val < this.pv) {
         // zig-zig (first rotation)
+        this.current_nodes.push(x);
         x.rotate_left();
         this.update_nodes.push(y);
         if(y.right === null) {
+          this.current_nodes.push(y);
           this.root = y;
           return true;
         }
@@ -135,6 +154,7 @@ class TopDownSplayTree {
       }
       // zig-zig (second rotation) or zig-zag (simplified)
       const r = x.remove_right();
+      this.current_nodes.push(r, x);
       this.root = r;
 
       this.add_left(x);
@@ -172,6 +192,7 @@ window.onload = () => {
     const d_edge = document.querySelector(`path.edge${n_id}`);
 
     node_view[v] = {
+      "nid": n_id,
       "node": d_node,
       "edge": d_edge,
     };
@@ -184,8 +205,19 @@ window.onload = () => {
     style["height"] = `${height}px`;
   };
 
-  const translate_obj = (result) => {
+  const translate_obj = (result, t_node, c_nodes) => {
     default_translate_obj(node_map, result, tl);
+    const t_view = (t_node !== null ? node_view[t_node.val].node : null);
+    const c_views = (c_nodes !== null ? c_nodes.map(node => node_view[node.val].node) : []);
+    tl.add({
+      duration: 1000,
+      changeBegin: (tl) => {
+        begin_change_current_color(t_view, c_views);
+      },
+      changeComplete: (tl) => {
+        end_change_current_color(t_view, c_views);
+      },
+    }, '-=1000');
   }
 
   const init_timeline = () => {
@@ -208,6 +240,10 @@ window.onload = () => {
 
   const splaying = (tl, tree, v, need_to_add) => {
     let max_depth = 0;
+
+    let t_node = (node_view[v] ? node_map[node_view[v].nid] : null);
+
+    tree.clear();
 
     let updated = true;
     while(true) {
@@ -235,7 +271,8 @@ window.onload = () => {
         const [x, y] = result_r.ps[n_id];
         result[n_id] = [cursor + x, y + 1];
       }
-      translate_obj(result);
+      const c_nodes = tree.get_current_nodes();
+      translate_obj(result, t_node, c_nodes);
 
       if(!updated) break;
       if(tree.is_splaying()) {
@@ -244,6 +281,7 @@ window.onload = () => {
             const node = tree.insert(v);
             if(node !== null) {
               add_node(v, node);
+              t_node = node;
             }
           } else {
             tree.finish_splaying();
@@ -312,7 +350,8 @@ window.onload = () => {
               const [x, y] = result_r.ps[n_id];
               result[n_id] = [cursor + x, y + 2];
             }
-            translate_obj(result);
+            const c_nodes = tree.get_current_nodes();
+            translate_obj(result, null, c_nodes);
 
             if(!updated) break;
             if(tree.is_splaying()) {
@@ -337,7 +376,8 @@ window.onload = () => {
           max_depth = Math.max(max_depth, result_m.depth);
 
           result[v_n_id] = [0, 0];
-          translate_obj(result);
+          const c_nodes = tree.get_current_nodes();
+          translate_obj(result, null, c_nodes);
         }
         updates.push(...tree.get_update_nodes());
       } else {
@@ -351,7 +391,8 @@ window.onload = () => {
           }
           max_depth = Math.max(max_depth, result_m.depth);
           result[v_n_id] = [0, 0];
-          translate_obj(result);
+          const c_nodes = tree.get_current_nodes();
+          translate_obj(result, null, c_nodes);
         }
       }
 

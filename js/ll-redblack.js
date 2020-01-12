@@ -55,7 +55,8 @@ Object.defineProperty(Node, 'RED', {
 class LeftLeaningRedBlackTree {
   constructor() {
     this.clear();
-    this.update_nodes = [];
+    this.update_nodes = new Set();
+    this.current_nodes = [];
   }
 
   clear() {
@@ -85,8 +86,11 @@ class LeftLeaningRedBlackTree {
 
   *insert(x) {
     this.update_nodes = new Set();
+    this.current_nodes = [];
     if(this.root === null) {
       const new_node = new Node(x);
+      this.current_nodes = [new_node];
+
       this.root = new_node;
       yield new_node;
       new_node.color = Node.BLACK;
@@ -108,6 +112,7 @@ class LeftLeaningRedBlackTree {
 
     if(x !== node.val) {
       const new_node = new Node(x);
+      this.current_nodes = [new_node];
       if(x < node.val) {
         node.set_left(new_node);
       } else {
@@ -120,32 +125,34 @@ class LeftLeaningRedBlackTree {
     while(node !== null) {
       // fixUp(node)
       if(is_red(node.right) && is_black(node.left)) {
+        this.current_nodes = [node, node.left, node.right];
+        this.update_nodes.add(node.left).add(node.right);
         node = node.rotate_left();
         if(node.prt === null) {
           this.root = node;
         }
-        this.update_nodes.add(node);
         yield;
       }
       if(is_red(node.left) && is_red(node.left.left)) {
+        this.current_nodes = [node, node.left, node.left.left];
+        this.update_nodes.add(node.left).add(node.left.left);
         node = node.rotate_right();
         if(node.prt === null) {
           this.root = node;
         }
-        this.update_nodes.add(node);
         yield;
       }
-
       if(is_red(node.left) && is_red(node.right)) {
         node.flip_colors();
-        this.update_nodes.add(node.left);
-        this.update_nodes.add(node.right);
+        this.current_nodes = [node, node.left, node.right];
+        this.update_nodes.add(node.left).add(node.right);
         yield;
       }
 
       node = node.prt;
     }
     if(is_red(this.root.color)) {
+      this.current_nodes = [node];
       this.root.color = Node.BLACK;
       yield;
     }
@@ -153,6 +160,7 @@ class LeftLeaningRedBlackTree {
 
   *remove(x) {
     this.update_nodes = new Set();
+    this.current_nodes = [];
     let node = this.root;
     while(node !== null) {
       this.update_nodes.add(node);
@@ -161,10 +169,15 @@ class LeftLeaningRedBlackTree {
           return;
         }
         if(is_black(node.left) && is_black(node.left.left)) {
+          this.current_nodes = [node, node.left, node.left.left, node.right];
+          this.update_nodes.add(node.left).add(node.right).add(node.left.left);
+          if(node.right !== null) {
+            this.current_nodes.push(node.right.left);
+            this.update_nodes.add(node.right.left);
+          }
+
           // moveRedLeft(node)
           node.flip_colors();
-          this.update_nodes.add(node.left);
-          this.update_nodes.add(node.right);
           yield;
 
           const right = node.right;
@@ -186,6 +199,7 @@ class LeftLeaningRedBlackTree {
         node = node.left;
       } else {
         if(is_red(node.left)) {
+          this.current_nodes = [node, node.left];
           node = node.rotate_right();
           if(node.prt === null) {
             this.root = node;
@@ -200,6 +214,7 @@ class LeftLeaningRedBlackTree {
           } else {
             this.root = null;
           }
+          this.current_nodes = [];
 
           yield node;
           node = prt;
@@ -207,6 +222,13 @@ class LeftLeaningRedBlackTree {
         }
         if(is_black(node.right) && is_black(node.right.left)) {
           // moveRedRight(node)
+          this.current_nodes = [node, node.left, node.right, node.right.left];
+          this.update_nodes.add(node.right.left);
+          if(node.left !== null) {
+            this.current_nodes.push(node.left.left);
+            this.update_nodes.add(node.left.left);
+          }
+
           node.flip_colors();
           this.update_nodes.add(node.left);
           this.update_nodes.add(node.right);
@@ -235,6 +257,12 @@ class LeftLeaningRedBlackTree {
             this.update_nodes.add(c_node);
             if(is_black(c_node.left) && is_black(c_node.left.left)) {
               // moveRedLeft(c_node)
+              this.current_nodes = [c_node, c_node.left, c_node.left.left, c_node.right];
+              if(c_node.right !== null) {
+                this.current_nodes.push(c_node.right.left);
+                this.update_nodes.add(c_node.right.left);
+              }
+
               c_node.flip_colors();
               this.update_nodes.add(node.left);
               this.update_nodes.add(node.right);
@@ -256,6 +284,7 @@ class LeftLeaningRedBlackTree {
             c_node = c_node.left;
           }
           this.update_nodes.add(c_node);
+          this.current_nodes = [node, c_node];
 
           // move c_node to node's position
           const c_prt = c_node.prt;
@@ -288,38 +317,46 @@ class LeftLeaningRedBlackTree {
     while(node !== null) {
       // fixUp(node)
       if(is_red(node.right) && is_black(node.left)) {
+        this.current_nodes = [node, node.left, node.right];
+        this.update_nodes.add(node.left).add(node.right);
         node = node.rotate_left();
         if(node.prt === null) {
           this.root = node;
         }
-        this.update_nodes.add(node);
         yield;
       }
       if(is_red(node.left) && is_red(node.left.left)) {
+        this.current_nodes = [node, node.left, node.left.left, node.right];
+        this.update_nodes.add(node.left).add(node.left.left);
         node = node.rotate_right();
         if(node.prt === null) {
           this.root = node;
         }
-        this.update_nodes.add(node);
         yield;
       }
       if(is_red(node.left) && is_red(node.right)) {
         node.flip_colors();
-        this.update_nodes.add(node.left);
-        this.update_nodes.add(node.right);
+        this.current_nodes = [node, node.left, node.right];
+        this.update_nodes.add(node.left).add(node.right);
         yield;
       }
       node = node.prt;
     }
     if(is_red(this.root)) {
+      this.current_nodes = [this.root];
       this.root.color = Node.BLACK;
       yield;
     }
+    this.current_nodes = [];
     yield;
   }
 
   get_update_nodes() {
-    return Array.from(this.update_nodes.values());
+    return Array.from(this.update_nodes.values()).filter(node => node !== null);
+  }
+
+  get_current_nodes() {
+    return this.current_nodes.filter(node => node !== null);
   }
 }
 
@@ -348,6 +385,7 @@ window.onload = () => {
     const d_edge = document.querySelector(`path.edge${n_id}`);
 
     node_view[v] = {
+      "nid": n_id,
       "node": d_node,
       "edge": d_edge,
     };
@@ -360,8 +398,10 @@ window.onload = () => {
     style["height"] = `${height}px`;
   };
 
-  const translate_obj = (result) => {
+  const translate_obj = (result, t_node, c_nodes) => {
     default_translate_obj(node_map, result, tl);
+    const t_view = t_node && node_view[t_node.val].node;
+    const c_views = (c_nodes !== null ? c_nodes.map(node => node_view[node.val].node) : []);
     tl.add({
       targets: ['circle.node-circle'],
       stroke: [{value: (el) => {
@@ -370,6 +410,12 @@ window.onload = () => {
         return (node.color === Node.RED ? "#ff0000" : "#000000");
       }}],
       duration: 1000,
+      changeBegin: (tl) => {
+        begin_change_current_color(t_view, c_views);
+      },
+      changeComplete: (tl) => {
+        end_change_current_color(t_view, c_views);
+      },
     }, '-=1000');
   }
 
@@ -396,14 +442,12 @@ window.onload = () => {
 
     init_timeline();
 
-    tl.add({
-      duration: 1000,
-    });
+    tl.add({ duration: 500 });
 
     let max_depth = 0;
     {
       const result_m = traverse(tree.root);
-      translate_obj(result_m.ps);
+      translate_obj(result_m.ps, null, null);
       max_depth = result_m.depth;
     }
 
@@ -413,6 +457,7 @@ window.onload = () => {
     if(tree.find(v)) {
       const step = tree.remove(v);
       let deleted = false;
+      const t_node = node_map[node_view[v].nid];
       while(true) {
         const {value: node, done: done} = step.next();
         if(done) break;
@@ -433,12 +478,15 @@ window.onload = () => {
           result[v_n_id] = [0, 0];
         }
 
-        translate_obj(result);
+        const c_nodes = tree.get_current_nodes();
+        translate_obj(result, t_node, c_nodes);
       }
 
       delete node_view[v];
       delete node_map[v_n_id];
     }
+
+    tl.add({ duration: 500 });
 
     const update_nodes = tree.get_update_nodes().filter(node => node.val !== v).map(node => node_view[node.val].node);
     tl.changeBegin = () => {
@@ -458,28 +506,31 @@ window.onload = () => {
   const add_tree_node = (v) => {
     init_timeline();
 
-    tl.add({
-      duration: 1000,
-    });
+    tl.add({ duration: 500 });
 
     let max_depth = traverse(tree.root).depth;
 
     if(!tree.find(v)) {
       const step = tree.insert(v);
+      let t_node = null;
       while(true) {
         const {value: node, done: done} = step.next();
         if(done) break;
 
         if(node) {
           add_node(v, node);
+          t_node = node;
         }
 
         const {ps: result, depth: depth} = traverse(tree.root);
         max_depth = Math.max(max_depth, depth);
 
-        translate_obj(result);
+        const c_nodes = tree.get_current_nodes();
+        translate_obj(result, t_node, c_nodes);
       }
     }
+
+    tl.add({ duration: 500 });
 
     const target_node = node_view[v].node;
 
