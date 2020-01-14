@@ -426,7 +426,6 @@ window.onload = () => {
       (node_num+1) * NODE_W + BASE_X*2,
       (max_depth+1) * NODE_H + BASE_Y*2
     );
-    check_constraints();
   };
 
   const add_tree_node = (v) => {
@@ -470,7 +469,6 @@ window.onload = () => {
       (node_num+1) * NODE_W + BASE_X*2,
       (max_depth+1) * NODE_H + BASE_Y*2
     );
-    check_constraints();
   };
 
   const check_constraints = () => {
