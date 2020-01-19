@@ -70,6 +70,7 @@ path.edge {
   overflow: scroll;
   border: 1px solid #000;
   margin: 5px;
+  min-height: 400px;
 }
 
 .node-text {
