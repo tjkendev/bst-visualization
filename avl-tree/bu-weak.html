@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <title>Visualization (Weak AVL Tree)</title>
+    <script src="https://cdn.jsdelivr.net/npm/animejs@3.1.0/lib/anime.min.js" integrity="sha256-98Q574VkbV+PkxXCKSgL6jVq9mrVbS7uCdA+vt0sLS8=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="../css/app.css" />
+    <script type="text/javascript" src="../js/app-common.js"></script>
+    <script type="text/javascript" src="../js/bu-wavl-tree.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Visualization (Weak AVL Tree)</h1>
+      <p>追加できるKeyの値の範囲は 0 ~ 999 です</p>
+      <p>各ノードの輪郭の色は rank difference によって変化 (根ノード除く):
+      <span class="box-text" style="color: #000000; border: solid 1px black;">0</span>
+      <span class="box-text" style="background-color: #800000; color: white;">1</span>
+      <span class="box-text" style="background-color: #ff0000; color: white;">2</span>
+      <span class="box-text" style="background-color: #ffa500; color: white;">3</span>
+      </p>
+      <div class="query-component">
+        <div>
+          <input class="node-key" type="text" placeholder="0 ~ 999" />
+          <button class="add" type="button">追加/検索</button>
+          <button class="add-inc" type="button">+1追加/検索</button>
+          <button class="add-dec" type="button">-1追加/検索</button>
+          <button class="remove" type="button">削除</button>
+        </div>
+        <div>
+          <button class="add-random" type="button">ランダム追加/検索</button>
+          <button class="remove-random" type="button">ランダム削除</button>
+        </div>
+      </div>
+      <div class="slider-component">
+        <span>アニメーション:</span>
+        <input type="range" class="anime-slider" />
+      </div>
+      <div>
+        <svg class="canvas">
+          <g class="edges"></g>
+          <g class="nodes"></g>
+        </svg>
+      </div>
+      <div>
+        <h3>参考</h3>
+        <ul>
+          <li><a href="https://en.wikipedia.org/wiki/WAVL_tree">WAVL tree - Wikipedia</a></li>
+          <li>Haeupler, Bernhard, Siddhartha Sen, and Robert E. Tarjan. "Rank-balanced trees." ACM Transactions on Algorithms (TALG) 11.4 (2015): 1-26.</li>
+        </ul>
+      </div>
+      <div>
+        <a href="../index.html">戻る</a>
+      </div>
+    </div>
+  </body>
+</html>
