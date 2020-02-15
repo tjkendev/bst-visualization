@@ -8,6 +8,7 @@ Binary Search Tree Visualization
 
 - Binary Search Tree
 - AVL Tree
+- Weak AVL Tree
 - Bottom-Up Red-Black Tree
 - Top-Down Red-Black Tree
 - Left-Leaning Red-Black Tree

@@ -1,13 +1,5 @@
 "use strict";
 
-function is_black(node) {
-  return (node === null) || (node.color === Node.BLACK);
-}
-
-function is_red(node) {
-  return !is_black(node);
-}
-
 class Node extends BaseNode {
   constructor(val) {
     super(val);
@@ -50,7 +42,7 @@ class AATree {
     return (node !== null ? node.level : 0);
   }
 
-  static isNeedSkew(node) {
+  static needToSkew(node) {
     if(node === null) return false;
     const left = node.left;
     return (
@@ -60,13 +52,13 @@ class AATree {
   }
 
   static skew(node) {
-    if(AATree.isNeedSkew(node)) {
+    if(AATree.needToSkew(node)) {
       return node.rotate_right();
     }
     return node;
   }
 
-  static isNeedSplit(node) {
+  static needToSplit(node) {
     if(node === null) return false;
     const right = node.right;
     return (
@@ -77,7 +69,7 @@ class AATree {
   }
 
   static split(node) {
-    if(AATree.isNeedSplit(node)) {
+    if(AATree.needToSplit(node)) {
       const right = node.rotate_left();
       right.level += 1;
       return right;
@@ -129,7 +121,7 @@ class AATree {
 
     node = new_node;
     while(node !== null) {
-      if(AATree.isNeedSkew(node)) {
+      if(AATree.needToSkew(node)) {
         this.current_nodes = [node, node.left];
         this.update_nodes.add(node.left);
         node = AATree.skew(node);
@@ -138,7 +130,7 @@ class AATree {
         }
         yield;
       }
-      if(AATree.isNeedSplit(node)) {
+      if(AATree.needToSplit(node)) {
         this.current_nodes = [node, node.right, node.right.right];
         this.update_nodes.add(node.right).add(node.right.right);
         node = AATree.split(node);
@@ -241,7 +233,7 @@ class AATree {
         yield;
       }
       // skew(node)
-      if(AATree.isNeedSkew(node)) {
+      if(AATree.needToSkew(node)) {
         this.current_nodes = [node, node.left];
         this.update_nodes.add(node.left);
         node = AATree.skew(node);
@@ -251,7 +243,7 @@ class AATree {
         yield;
       }
       // skew(node.right)
-      if(AATree.isNeedSkew(node.right)) {
+      if(AATree.needToSkew(node.right)) {
         const right = node.right;
         this.current_nodes = [right, right.left];
         this.update_nodes.add(right).add(right.left);
@@ -259,7 +251,7 @@ class AATree {
         yield;
       }
       // skew(node.right.right)
-      if(node.right !== null && AATree.isNeedSkew(node.right.right)) {
+      if(node.right !== null && AATree.needToSkew(node.right.right)) {
         const r_right = node.right.right;
         this.current_nodes = [r_right, r_right.left];
         this.update_nodes.add(r_right).add(r_right.left);
@@ -267,7 +259,7 @@ class AATree {
         yield;
       }
       // split(node)
-      if(AATree.isNeedSplit(node)) {
+      if(AATree.needToSplit(node)) {
         this.current_nodes = [node, node.right, node.right.right];
         this.update_nodes.add(node.right).add(node.right.right);
         node = AATree.split(node);
@@ -277,7 +269,7 @@ class AATree {
         yield;
       }
       // split(node.right)
-      if(AATree.isNeedSplit(node.right)) {
+      if(AATree.needToSplit(node.right)) {
         const right = node.right;
         this.current_nodes = [right, right.right, right.right.right];
         this.update_nodes.add(right).add(right.right).add(right.right.right);

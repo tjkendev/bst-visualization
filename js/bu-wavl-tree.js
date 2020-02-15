@@ -27,8 +27,6 @@ class Node extends BaseNode {
 class WAVLTree {
   constructor() {
     this.root = null;
-    this.cur = null;
-    this.prt = null;
     this.update_nodes = new Set();
     this.current_nodes = [];
   }
@@ -67,8 +65,6 @@ class WAVLTree {
     }
 
     const new_node = new Node(x);
-    this.cur = new_node;
-    this.prt = node;
     if(x < node.val) {
       node.set_left(new_node);
     } else {
@@ -155,7 +151,6 @@ class WAVLTree {
 
   *remove(x) {
     this.update_nodes = new Set();
-    this.cur = this.prt = null;
     let node = this.root;
     while(node !== null) {
       if(node.val === x) break;
