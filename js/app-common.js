@@ -19,7 +19,7 @@ function get_edge_pos(p) {
   return [rx * NODE_W + EDGE_B + BASE_X, ry * NODE_H + EDGE_B + BASE_Y];
 }
 
-function createNode(val, id) {
+function create_node(val, id) {
   const new_g = document.createElementNS("http://www.w3.org/2000/svg", 'g');
   new_g.setAttribute("class", `node${id} node`);
   new_g.setAttribute("style", "transform: translateX(15px) translateY(15px)");
@@ -50,7 +50,7 @@ function createNode(val, id) {
   return new_g;
 }
 
-function createEdge(val, id) {
+function create_edge(val, id) {
   const x = FIRST_X + EDGE_B, y = FIRST_Y + EDGE_B;
   const new_el = document.createElementNS("http://www.w3.org/2000/svg", 'path');
   new_el.setAttribute("class", `edge${id} edge`);
@@ -61,14 +61,14 @@ function createEdge(val, id) {
   return new_el;
 }
 
-function removeNode(id) {
+function remove_node(id) {
   const es = document.getElementsByClassName(`node${id}`);
   for(let e of es) {
     e.remove();
   }
 }
 
-function removeEdge(id) {
+function remove_edge(id) {
   const es = document.getElementsByClassName(`edge${id}`);
   for(let e of es) {
     e.remove();

@@ -354,8 +354,8 @@ window.onload = () => {
 
   const add_node = (v, node) => {
     const n_id = node.id;
-    nodes.appendChild(createNode(v, n_id));
-    edges.appendChild(createEdge(v, n_id));
+    nodes.appendChild(create_node(v, n_id));
+    edges.appendChild(create_edge(v, n_id));
     const d_node = document.querySelector(`g.node${n_id}`);
     const d_edge = document.querySelector(`path.edge${n_id}`);
 
@@ -384,18 +384,18 @@ window.onload = () => {
         const min_w = (node.size - 1) / (2 * node.size), max_w = alpha;
         const weight = Math.max(node.size_left(), node.size_right()) / node.size;
         const w = Math.min((weight - min_w) / (max_w - min_w), 1.0);
-        return `rgb(${255 * w}, 0, 0)`
+        return `rgb(${255 * w}, 0, 0)`;
       }}],
       duration: 1000,
     }, '-=1000');
-  }
+  };
 
   const init_timeline = () => {
     if(delete_n_ids !== null) {
       const n_ids = delete_n_ids;
       for(let n_id of n_ids) {
-        removeNode(n_id);
-        removeEdge(n_id);
+        remove_node(n_id);
+        remove_edge(n_id);
       }
       delete_n_ids = null;
     }
@@ -488,7 +488,7 @@ window.onload = () => {
       (node_num+1) * NODE_W + BASE_X*2,
       (max_depth+1) * NODE_H + BASE_Y*2
     );
-  }
+  };
 
   const translate_tree = (tree, rebuilding) => {
     const result_m = traverse(tree.root);
@@ -499,7 +499,7 @@ window.onload = () => {
     for(let n_id in result_m.ps) {
       const [_, y] = result_m.ps[n_id];
       const node = node_map[n_id];
-      tmp.push([node, y, 0])
+      tmp.push([node, y, 0]);
     }
     if(rebuilding) {
       const result_r = tree.rebuild_nodes;

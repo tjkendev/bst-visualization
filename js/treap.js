@@ -25,7 +25,7 @@ class Treap {
     if(this.root === null) {
       const new_node = new Node(x);
       this.current_nodes = [new_node];
-      return this.root = this.cur = new_node;
+      return (this.root = this.cur = new_node);
     }
     let node = this.root;
     while(node !== null) {
@@ -48,7 +48,7 @@ class Treap {
     } else {
       node.set_right(new_node);
     }
-    return this.cur = new_node;
+    return (this.cur = new_node);
   }
 
   insert_rotate_step() {
@@ -92,7 +92,7 @@ class Treap {
     if(node === null) {
       return null;
     }
-    return this.cur = node;
+    return (this.cur = node);
   }
 
   remove_rotate_step() {
@@ -163,8 +163,8 @@ window.onload = () => {
 
   const add_node = (v, node) => {
     const n_id = node.id;
-    nodes.appendChild(createNode(v, n_id));
-    edges.appendChild(createEdge(v, n_id));
+    nodes.appendChild(create_node(v, n_id));
+    edges.appendChild(create_edge(v, n_id));
     const d_node = document.querySelector(`g.node${n_id}`);
     const d_edge = document.querySelector(`path.edge${n_id}`);
 
@@ -190,7 +190,7 @@ window.onload = () => {
       stroke: [{value: (el) => {
         const n_id = el.parentNode.getAttribute("nid");
         const node = node_map[n_id];
-        return `rgb(${255 * node.priority}, 0, 0)`
+        return `rgb(${255 * node.priority}, 0, 0)`;
       }}],
       duration: 1000,
       changeBegin: (tl) => {
@@ -200,13 +200,13 @@ window.onload = () => {
         end_change_current_color(t_view, c_views);
       },
     }, '-=1000');
-  }
+  };
 
   const init_timeline = () => {
     if(delete_n_id !== null) {
       const n_id = delete_n_id;
-      removeNode(n_id);
-      removeEdge(n_id);
+      remove_node(n_id);
+      remove_edge(n_id);
       delete_n_id = null;
     }
     if(tl !== null) {

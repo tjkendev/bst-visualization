@@ -46,8 +46,8 @@ class AATree {
     if(node === null) return false;
     const left = node.left;
     return (
-         left !== null
-      && node.level === left.level
+         left !== null &&
+         node.level === left.level
     );
   }
 
@@ -62,9 +62,9 @@ class AATree {
     if(node === null) return false;
     const right = node.right;
     return (
-         right !== null
-      && right.right !== null
-      && node.level === right.right.level
+         right !== null &&
+         right.right !== null &&
+         node.level === right.right.level
     );
   }
 
@@ -220,7 +220,7 @@ class AATree {
       // decrease_key(node)
       const new_level = Math.min(
         AATree.get_level(node.left),
-        AATree.get_level(node.right),
+        AATree.get_level(node.right)
       ) + 1;
       if(new_level < node.level) {
         this.current_nodes = [node];
@@ -308,8 +308,8 @@ window.onload = () => {
 
   const add_node = (v, node) => {
     const n_id = node.id;
-    nodes.appendChild(createNode(v, n_id));
-    edges.appendChild(createEdge(v, n_id));
+    nodes.appendChild(create_node(v, n_id));
+    edges.appendChild(create_edge(v, n_id));
     const d_node = document.querySelector(`g.node${n_id}`);
     const d_edge = document.querySelector(`path.edge${n_id}`);
 
@@ -347,13 +347,13 @@ window.onload = () => {
         end_change_current_color(t_view, c_views);
       },
     }, '-=1000');
-  }
+  };
 
   const init_timeline = () => {
     if(delete_n_id !== null) {
       const n_id = delete_n_id;
-      removeNode(n_id);
-      removeEdge(n_id);
+      remove_node(n_id);
+      remove_edge(n_id);
       delete_n_id = null;
     }
     if(tl !== null) {
@@ -504,7 +504,6 @@ window.onload = () => {
     }
     if(tree.root !== null) dfs(tree.root, null, 0);
     let max_depth = 0;
-    leaves.forEach
     for(let [node, bdep] of leaves) {
       max_depth = Math.max(max_depth, bdep);
     }
