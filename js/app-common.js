@@ -153,6 +153,12 @@ function end_change_current_color(target_node, current_nodes) {
   }
 }
 
+function default_change_canvas_size(canvas, width, height) {
+  const style = canvas.style;
+  style.width = `${width}px`;
+  style.height = `${height}px`;
+}
+
 function default_translate_obj(node_map, ps, tl) {
   tl.add({
     targets: ['g.node'],
@@ -212,7 +218,7 @@ function update_hidden_node() {
       if(deleted) {
         anim.animatables.forEach((e) => {
           const el = e.target;
-          el.style["display"] = "";
+          el.style.display = "";
         });
         deleted = false;
       }
@@ -220,7 +226,7 @@ function update_hidden_node() {
       if(!deleted) {
         anim.animatables.forEach((e) => {
           const el = e.target;
-          el.style["display"] = "none";
+          el.style.display = "none";
         });
         deleted = true;
       }
@@ -291,7 +297,7 @@ function set_add_inc(add_tree_node) {
   });
 }
 
-function set_add_dec(add_tree_node, node_view) {
+function set_add_dec(add_tree_node) {
   const input = document.querySelector(".node-key");
   document.querySelector(".add-dec").onclick = ((el) => {
     const val = input.value;

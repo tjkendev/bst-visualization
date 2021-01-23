@@ -159,9 +159,7 @@ window.onload = () => {
   };
 
   const change_canvas_size = (width, height) => {
-    const style = canvas.style;
-    style["width"] = `${width}px`;
-    style["height"] = `${height}px`;
+    default_change_canvas_size(canvas, width, height);
   };
 
   const translate_obj = (result) => {
